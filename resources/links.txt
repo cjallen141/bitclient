@@ -1,1 +1,7 @@
 http://www.kristenwidman.com/blog/how-to-write-a-bittorrent-client-part-1/
+
+wiki on BitTorrent
+https://wiki.theory.org/BitTorrentSpecification
+
+official specificiations
+http://bittorrent.org/beps/bep_0003.html
