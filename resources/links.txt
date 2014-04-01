@@ -1,4 +1,6 @@
 http://www.kristenwidman.com/blog/how-to-write-a-bittorrent-client-part-1/
+http://www.kristenwidman.com/blog/how-to-write-a-bittorrent-client-part-2/
+https://github.com/litacho/bittorrent
 
 wiki on BitTorrent
 https://wiki.theory.org/BitTorrentSpecification
