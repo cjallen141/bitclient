@@ -1,9 +1,8 @@
-import socket
-import math
 
-from bitstring import BitArray
 from tracker import TrackerManager
 import threading
+from peers import Peer
+
 class PeerManager(threading.Thread):
 	# attributes:
 	#		peers[] - list of all managed peers
@@ -42,7 +41,9 @@ class PeerManager(threading.Thread):
 		
 	def run(self):
 		#enters thread
-		print "run!"
+		print "starting Peer Manager..."
+		self.manage()
+		print "closing Peer Manager..."
 
 
 	def manage(self):
@@ -51,7 +52,9 @@ class PeerManager(threading.Thread):
 		####spawn new peers that are available
 		####tell peers that are choked to idle
 		print "manage!"
-		
+	
+	def spawn_peer(self):
+		self.peers.append(Peer())
 
 
 ##################TESTING CODE##################
@@ -65,3 +68,7 @@ peer_mgr = PeerManager(2230, tracker)
 peer_mgr.update_peer_list()
 
 print peer_mgr.peers[1]
+
+peer_mgr.start()#starts the thread
+
+peer_mgr.spawn_peer()
