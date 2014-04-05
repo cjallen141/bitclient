@@ -1,4 +1,10 @@
 
+########TODO
+# currently spawning threads but not properly deleting the object when the thread ends
+# need to clean this up and show that the manager has control over starting/stopping peer threads
+#(4-5-14 cja)
+
+
 from tracker import TrackerManager
 import threading
 from peers import Peer
@@ -36,8 +42,8 @@ class PeerManager(threading.Thread):
 		#only adds if not already in peers list
 		for np in new_peers:
 			if np not in self.peers:
-				self.peers.append(np)
-
+				##self.peers.append(np)  this is the original, removed for testing (cja)
+				self.peers.append(Peer(np))
 		
 	def run(self):
 		#enters thread
@@ -51,7 +57,12 @@ class PeerManager(threading.Thread):
 		####if no peers available, call updatePeerList
 		####spawn new peers that are available
 		####tell peers that are choked to idle
-		print "manage!"
+		x = 0
+		while x<2:
+			#checking if there are any peers
+			if len(self.peers) == 0:
+				self.update_peer_list()
+				x=x+1
 	
 	def spawn_peer(self):
 		self.peers.append(Peer())
@@ -71,4 +82,3 @@ print peer_mgr.peers[1]
 
 peer_mgr.start()#starts the thread
 
-peer_mgr.spawn_peer()

@@ -7,4 +7,4 @@ class TrackerManager(object):
 	def update_peer_list(self):
 		print "updating the peer list"
 		
-		return ["peer0", "peer1", "peer2"]
+		return ['peer0', 'peer1', 'peer2']
