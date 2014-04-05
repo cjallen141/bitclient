@@ -67,7 +67,7 @@ connect_to_tracker()
 parse_response()
 request_list()
 
-TorrentTracker
+bitClient
 ---------------------------------------------
 peerManager
 trackerManager
