@@ -3,8 +3,8 @@ import math
 
 from bitstring import BitArray
 from tracker import TrackerManager
-
-class PeerManager(object):
+import threading
+class PeerManager(threading.Thread):
 	# attributes:
 	#		peers[] - list of all managed peers
 	#		peerID  - self ID for connecting to peers
@@ -21,19 +21,47 @@ class PeerManager(object):
 	#		-- create a new peer, this also spawns a thread for the peer
 	#	kill_peer()
 	#		--cleans up the peer and deletes the thread
+	#	run()
+	#		-this is where the thread enters
 
 
 	def __init__(self, peerID, tracker_mgr):
-
+		threading.Thread.__init__(self)
 		self.peerID = peerID
 		self.peers = []
 		self.tracker_mgr = tracker_mgr
 
+	def update_peer_list(self):
+		new_peers = self.tracker_mgr.update_peer_list()
 
-##################TESTING CODE
+		#only adds if not already in peers list
+		for np in new_peers:
+			if np not in self.peers:
+				self.peers.append(np)
+
+		
+	def run(self):
+		#enters thread
+		print "run!"
+
+
+	def manage(self):
+		#check status of peers
+		####if no peers available, call updatePeerList
+		####spawn new peers that are available
+		####tell peers that are choked to idle
+		print "manage!"
+		
+
+
+##################TESTING CODE##################
 
 #create a tracker object
 tracker = TrackerManager()
 #create peermanager object
 peer_mgr = PeerManager(2230, tracker)
-print peer_mgr.peerID
+
+
+peer_mgr.update_peer_list()
+
+print peer_mgr.peers[1]
