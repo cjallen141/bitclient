@@ -44,6 +44,7 @@ class PeerManager(threading.Thread):
 			if np not in self.peers:
 				##self.peers.append(np)  this is the original, removed for testing (cja)
 				self.peers.append(Peer(np))
+		print "finished adding peers"
 		
 	def run(self):
 		#enters thread
@@ -62,9 +63,20 @@ class PeerManager(threading.Thread):
 			#checking if there are any peers
 			if len(self.peers) == 0:
 				self.update_peer_list()
+
+
+				for peer in self.peers:
+					peer.start()
+				
 				x=x+1
+				print x
+			y = [peer for peer in self.peers if peer.isAlive()]
+			self.peers = y
+
+				
 	
 	def spawn_peer(self):
+
 		self.peers.append(Peer())
 
 
@@ -75,10 +87,6 @@ tracker = TrackerManager()
 #create peermanager object
 peer_mgr = PeerManager(2230, tracker)
 
-
-peer_mgr.update_peer_list()
-
-print peer_mgr.peers[1]
 
 peer_mgr.start()#starts the thread
 

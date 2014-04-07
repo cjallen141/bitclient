@@ -8,7 +8,7 @@ class Peer(threading.Thread):
 		self.id = id
 
 
-		self.start()
+		
 		
 	def run(self):
 		print "started a new peer thread"
