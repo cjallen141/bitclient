@@ -70,13 +70,13 @@ class PeerManager(threading.Thread):
 				
 				x=x+1
 				print x
-			y = [peer for peer in self.peers if peer.isAlive()]
-			self.peers = y
+			self.peers[:] = [peer for peer in self.peers if peer.isAlive()]
+			
 
 				
 	
 	def spawn_peer(self):
-
+		peer = Peer(self.peerID)
 		self.peers.append(Peer())
 
 
