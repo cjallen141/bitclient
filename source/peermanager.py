@@ -1,9 +1,14 @@
-import socket
-import math
 
-from bitstring import BitArray
+########TODO
+# currently spawning threads but not properly deleting the object when the thread ends
+# need to clean this up and show that the manager has control over starting/stopping peer threads
+#(4-5-14 cja)
+
+
 from tracker import TrackerManager
 import threading
+from peers import Peer
+
 class PeerManager(threading.Thread):
 	# attributes:
 	#		peers[] - list of all managed peers
@@ -37,12 +42,15 @@ class PeerManager(threading.Thread):
 		#only adds if not already in peers list
 		for np in new_peers:
 			if np not in self.peers:
-				self.peers.append(np)
-
+				##self.peers.append(np)  this is the original, removed for testing (cja)
+				self.peers.append(Peer(np))
+		print "finished adding peers"
 		
 	def run(self):
 		#enters thread
-		print "run!"
+		print "starting Peer Manager..."
+		self.manage()
+		print "closing Peer Manager..."
 
 
 	def manage(self):
@@ -50,8 +58,26 @@ class PeerManager(threading.Thread):
 		####if no peers available, call updatePeerList
 		####spawn new peers that are available
 		####tell peers that are choked to idle
-		print "manage!"
-		
+		x = 0
+		while x<2:
+			#checking if there are any peers
+			if len(self.peers) == 0:
+				self.update_peer_list()
+
+
+				for peer in self.peers:
+					peer.start()
+				
+				x=x+1
+				print x
+			self.peers[:] = [peer for peer in self.peers if peer.isAlive()]
+			
+
+				
+	
+	def spawn_peer(self):
+		peer = Peer(self.peerID)
+		self.peers.append(Peer())
 
 
 ##################TESTING CODE##################
@@ -62,6 +88,5 @@ tracker = TrackerManager()
 peer_mgr = PeerManager(2230, tracker)
 
 
-peer_mgr.update_peer_list()
+peer_mgr.start()#starts the thread
 
-print peer_mgr.peers[1]
