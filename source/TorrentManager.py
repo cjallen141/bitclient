@@ -1,5 +1,6 @@
 # TorrentManager.py
 from TrackerManager import TrackerManager
+from peermanager import PeerManager
 
 
 class TorrentManager:
@@ -18,9 +19,12 @@ class TorrentManager:
         #       length
         # All others are optional
 
+        print 'Initializing Torrent Manager...',
         #self.comment = data['comment']
+        self.info_hash = data['info_hash']
         self.announce_url = data['announce']
         self.piece_length = data['info']['piece length']
+        self.peer_id = data['peer_id']
 
         # Check to see if it is a multi-file torrent or a single-file torrent
         # Multi File
@@ -36,13 +40,29 @@ class TorrentManager:
             self.name = data['info']['name']
             self.length = data['info']['length']
 
+        print 'Initialized'
+
     # Methods
     def initialize_subordinates(self):
-        self.TrackM1 = TrackerManager(self.announce_url)
+        data = [self.announce_url, self.info_hash, self.peer_id]
+        print 'Initializing Tracker Manager...',
+        self.TrackM1 = TrackerManager(data)
+        print 'Initialized'
+        print 'Initializing Peer Manager...',
+        self.PeerM1 = PeerManager(self.peer_id, self.TrackM1)
+        print 'Initialized'
+        print ''
 
     def kill_subordinates(self):
+        print ''
         if hasattr(self, 'TrackM1'):
+            print 'Killing Tracker Manager...',
             del self.TrackM1
+            print 'Killed'
+        if hasattr(self, 'PeerM1'):
+            print 'Killing Peer Manager...',
+            del self.PeerM1
+            print 'Killed'
 
 ## Testing Code
 # file = '../referenceFiles/TestTorrent.torrent'

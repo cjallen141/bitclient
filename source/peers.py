@@ -1,13 +1,17 @@
 import socket
 import threading
 from Queue import Queue
+
+
 class Peer(threading.Thread):
 #Attributes
 # 	ipAddress - peer ip address
 # 	portNumber - peer port number
 #	client_id  - client_id used by application to broadcast to peers
-#	pm_id	- id # given by PeerManager, only really used for internal purposes of the pm
-#	download_block_q - downloaded blocks in queue to be put into the main downloaded file
+#	pm_id	- id # given by PeerManager,
+#				only really used for internal purposes of the pm
+#	download_block_q - downloaded blocks
+#				in queue to be put into the main downloaded file
 # activeFlag
 # availablePieces - Dictionary of available pieces
 # requestedBlock
@@ -89,15 +93,15 @@ class Peer(threading.Thread):
 
 ##testing next_desired_block_q
 
-blocks_q = Queue(0)
-blocks_q.put('0')
-blocks_q.put('1')
-blocks_q.put('2')
-blocks_q.put('3')
+# blocks_q = Queue(0)
+# blocks_q.put('0')
+# blocks_q.put('1')
+# blocks_q.put('2')
+# blocks_q.put('3')
 
-peer = Peer(0, 2020,'192.168.1.1',3251,blocks_q)
+# peer = Peer(0, 2020,'192.168.1.1',3251,blocks_q)
 
-peer.
+# peer.
 
 # print peer.ipAddress
 # peer.run()

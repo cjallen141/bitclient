@@ -82,11 +82,11 @@ class PeerManager(threading.Thread):
 
 ##################TESTING CODE##################
 
-#create a tracker object
-tracker = TrackerManager()
-#create peermanager object
-peer_mgr = PeerManager(2230, tracker)
+# #create a tracker object
+# tracker = TrackerManager()
+# #create peermanager object
+# peer_mgr = PeerManager(2230, tracker)
 
 
-peer_mgr.start()#starts the thread
+# peer_mgr.start()#starts the thread
 
