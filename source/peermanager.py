@@ -5,7 +5,7 @@
 #(4-5-14 cja)
 
 
-from tracker import TrackerManager
+from TrackerManager import TrackerManager
 import threading
 from peers import Peer
 
@@ -35,6 +35,7 @@ class PeerManager(threading.Thread):
 		self.peerID = peerID
 		self.peers = []
 		self.tracker_mgr = tracker_mgr
+		self.numwant = 50 # Start off with 50 and go down
 
 	def update_peer_list(self):
 		new_peers = self.tracker_mgr.update_peer_list()

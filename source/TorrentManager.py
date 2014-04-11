@@ -1,6 +1,7 @@
 # TorrentManager.py
 from TrackerManager import TrackerManager
 from peermanager import PeerManager
+from PieceManager import PieceManager
 
 
 class TorrentManager:
@@ -25,6 +26,11 @@ class TorrentManager:
         self.announce_url = data['announce']
         self.piece_length = data['info']['piece length']
         self.peer_id = data['peer_id']
+        self.state = 'started'
+        self.key = data['key']
+        self.port = data['port']
+        self.compact = data['compact']
+        self.no_peer_id = data['no_peer_id']
 
         # Check to see if it is a multi-file torrent or a single-file torrent
         # Multi File
@@ -50,6 +56,9 @@ class TorrentManager:
         print 'Initialized'
         print 'Initializing Peer Manager...',
         self.PeerM1 = PeerManager(self.peer_id, self.TrackM1)
+        print 'Initialized'
+        print 'Initializing Piece Manager...',
+        self.PieceM1 = PieceManager(self.piece_length)
         print 'Initialized'
         print ''
 
