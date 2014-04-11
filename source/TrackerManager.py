@@ -53,10 +53,10 @@ class TrackerManager:
                 print 'Incorrect URL Parameters'
                 ret_val = 0
             else:
-                print 'Connected to Tracker'
+                print 'Received GET Response from Tracker'
                 result = Decoder.bdecode_data(response.content)
                 ret_val = result
-                print 'Received Peer List'
+                print 'Received Peer Candidate List'
             return ret_val
         else:
             print 'Tracker must be a GET tracker'
