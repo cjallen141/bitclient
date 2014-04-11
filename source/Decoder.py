@@ -39,6 +39,12 @@ def pencode_data(data):
     encoded_data = ''.join(map(lambda c: '%%%02x' % c, map(ord, data)))
     return encoded_data
 
+
+# Used to change escaped binary strings to ascii strings in hex form
+def bin2asc(data):
+    ascii_string = ''.join(map(lambda c: '%02x' % c, map(ord, data)))
+    return ascii_string
+
 #-------------------Hashes------------------------
 
 

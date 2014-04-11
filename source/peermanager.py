@@ -4,8 +4,6 @@
 # need to clean this up and show that the manager has control over starting/stopping peer threads
 #(4-5-14 cja)
 
-
-from TrackerManager import TrackerManager
 import threading
 from peers import Peer
 
@@ -30,22 +28,27 @@ class PeerManager(threading.Thread):
 	#		-this is where the thread enters
 
 
-	def __init__(self, peerID, tracker_mgr):
+	def __init__(self, peerID):
 		threading.Thread.__init__(self)
 		self.peerID = peerID
 		self.peers = []
-		self.tracker_mgr = tracker_mgr
 		self.numwant = 50 # Start off with 50 and go down
+		self.TrackM1 = ''
+		self.PieceM1 = ''
 
 	def update_peer_list(self):
-		new_peers = self.tracker_mgr.update_peer_list()
+		# new_peers[0] is the number of peers
+		# new_peers[1] is the peer list
+		# look in TrackerManager to figure out what the peer list is
+		new_peers = self.TrackM1.update_peer_list()
 
-		#only adds if not already in peers list
-		for np in new_peers:
-			if np not in self.peers:
-				##self.peers.append(np)  this is the original, removed for testing (cja)
-				self.peers.append(Peer(np))
-		print "finished adding peers"
+		# #only adds if not already in peers list
+		# for np in new_peers:
+		# 	if np not in self.peers:
+		# 		##self.peers.append(np)  this is the original, removed for testing (cja)
+		# 		self.peers.append(Peer(np))
+		# print "finished adding peers"
+		print new_peers
 		
 	def run(self):
 		#enters thread

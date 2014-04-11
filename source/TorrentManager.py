@@ -21,6 +21,8 @@ class TorrentManager:
         # All others are optional
 
         print 'Initializing Torrent Manager...',
+
+        # Some Attributes being populated
         #self.comment = data['comment']
         self.info_hash = data['info_hash']
         self.announce_url = data['announce']
@@ -49,19 +51,30 @@ class TorrentManager:
         print 'Initialized'
 
     # Methods
+    # Initialize all of the Managers
     def initialize_subordinates(self):
         data = [self.announce_url, self.info_hash, self.peer_id]
         print 'Initializing Tracker Manager...',
         self.TrackM1 = TrackerManager(data)
         print 'Initialized'
         print 'Initializing Peer Manager...',
-        self.PeerM1 = PeerManager(self.peer_id, self.TrackM1)
+        self.PeerM1 = PeerManager(self.peer_id)
         print 'Initialized'
         print 'Initializing Piece Manager...',
         self.PieceM1 = PieceManager(self.piece_length)
         print 'Initialized'
         print ''
+        self.TrackM1.PeerM1 = self.PeerM1
+        self.TrackM1.PieceM1 = self.PieceM1
+        self.PeerM1.TrackM1 = self.TrackM1
+        self.PeerM1.PieceM1 = self.PieceM1
+        self.PieceM1.TrackM1 = self.TrackM1
+        self.PieceM1.PeerM1 = self.PeerM1
+        self.TrackM1.TorM1 = self
+        self.PieceM1.TorM1 = self
+        self.PeerM1.TorM1 = self
 
+    # Kill all of the Managers
     def kill_subordinates(self):
         print ''
         if hasattr(self, 'TrackM1'):
@@ -72,32 +85,9 @@ class TorrentManager:
             print 'Killing Peer Manager...',
             del self.PeerM1
             print 'Killed'
+        if hasattr(self, 'PieceM1'):
+            print 'Killing Piece Manager...',
+            del self.PieceM1
+            print 'Killed'
 
 ## Testing Code
-# file = '../referenceFiles/TestTorrent.torrent'
-# file1 = '../referenceFiles/WhySoccerMatters-Original.torrent'
-# fh = open(file, 'rb')
-# fh1 = open(file1, 'rb')
-# encodedData = fh.read()
-# encodedData1 = fh1.read()
-# fh.close()
-# fh1.close()
-# decodedData = bencode.bdecode(encodedData)
-# decodedData1 = bencode.bdecode(encodedData1)
-
-# TM1 = TorrentManager(decodedData)
-# #print TM1.comment
-# print TM1.announce_url
-# print TM1.name
-# if (TM1.multi_file is True):
-#     print TM1.files
-# else:
-#     print TM1.length
-
-# TM2 = TorrentManager(decodedData1)
-# print TM2.announce_url
-# print TM2.name
-# if (TM2.multi_file is True):
-#     print TM2.files
-# else:
-#     print TM2.length
