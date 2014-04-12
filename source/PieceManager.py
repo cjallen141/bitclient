@@ -134,9 +134,14 @@ class Piece:
 		if not self.downloaded:
 			return 0
 		#check against SHA1 hash. TODO
+		hash_of_data = Decoder.create_hash(self.data)
 
-
-		return 1
+		if hash_of_data == self.hash:
+			self.verified = True
+			print self
+			return 1
+		else:
+			return 0
 
 
 
@@ -167,3 +172,12 @@ if __name__ == '__main__':
 		d = 0
 		while (d<1000000):
 			d += 1
+
+	sys.stdout.write('\n')
+	pm.downloaded_piece_list[0].hash = Decoder.create_hash('itshouldbetwentybits')
+	pm.downloaded_piece_list[0].data = 'itshouldbetwentybits'
+	pm.downloaded_piece_list[0].downloaded = True
+
+	print pm.downloaded_piece_list[0]
+
+	pm.downloaded_piece_list[0].verify_piece()
