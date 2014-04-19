@@ -4,15 +4,28 @@ import Decoder
 from TorrentManager import TorrentManager
 
 
-def main_loop(file1, peer_id, key, port, compact, no_peer_id):
+def main():
     # The first thing we want to do is have them input a file
     # For now this is just going to be hard-coded in
     #   because I don't want to have to input everytime
     # file1 is a single-file torrent
     # file2 is a multi-file torrent
+    #file1 = '../referenceFiles/TestTorrent.torrent'
+    #file2 = '../referenceFiles/WhySoccerMatters-Original.torrent'
+    #file3 = 'ThisIsNotARealFile.torrent'
+    file4 = '/Users/brent/Downloads/ubuntu-13.10-desktop-amd64.iso.torrent'
+    #file5 = '/Users/brent/Downloads/t-rice.jpg.torrent'
+    #file6 = '/Users/brent/Downloads/ProGit.pdf.torrent'
+
+    peer_id = 'ThisIsATestOfGTENS00'
+    key = '50EDCACE'
+    port = 61130
+    compact = 1
+    no_peer_id = 1
+    max_connections = 1
 
     # Next we decode it
-    data = Decoder.bdecode_torrent(file1)
+    data = Decoder.bdecode_torrent(file4)
 
     # Get the SHA1 Hash for the info dictionary
     # It has to be bencoded first
@@ -27,21 +40,21 @@ def main_loop(file1, peer_id, key, port, compact, no_peer_id):
     data['key'] = key
     data['compact'] = compact
     data['no_peer_id'] = no_peer_id
+    data['max_connections'] = max_connections
 
     # Now we can start the TorrentManager
     TorM1 = TorrentManager(data)
 
     # Initialize its subordinates
     TorM1.initialize_subordinates()
-
     TorM1.PeerM1.update_peer_list()
+    TorM1.PeerM1.connect_to_peers()
 
+    print ''
+    print 'Killed Tracker Manager...'
+    print 'Killed Peer Manager...'
+    print 'Killed Piece Manager...'
+    print 'Killed Torrent Manager...'
 
-# Exit the program gracefully (hopefully)
-def exit_grace(TorM1):
-    # Kill the subordinates and then the Torrent Manager
-    TorM1.kill_subordinates()
-    print 'Killing Torrent Manager...',
-    del TorM1
-    print 'Killed'
-    print 'Goodbye'
+if __name__ == "__main__":
+    main()

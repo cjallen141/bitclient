@@ -8,6 +8,7 @@
 
 import threading
 from peers import Peer
+import socket
 
 
 class PeerManager(threading.Thread):
@@ -31,12 +32,13 @@ class PeerManager(threading.Thread):
     #   run()
     #       -this is where the thread enters
 
-    def __init__(self, peerID):
+    def __init__(self, peerID, max_connections):
         threading.Thread.__init__(self)
         self.peerID = peerID
         self.peers = []
         self.candidate_peers = []
         self.numwant = 50  # Start off with 50 and go down
+        self.max_connections = max_connections
         self.TrackM1 = ''
         self.PieceM1 = ''
 
@@ -55,24 +57,29 @@ class PeerManager(threading.Thread):
             # The list is in big-endian so i'm not sure
             # what corresponds to what. I'm just guessing.
             peer_hex_id = new_peers[1][start:end]
-            peer_ip = peer_hex_id[0:8]
-            peer_port = peer_hex_id[8:13]
-            one_peer = [str(int(peer_ip[0:2], 16)) +
-                        '.' + str(int(peer_ip[2:4], 16)) +
-                        '.' + str(int(peer_ip[4:6], 16)) +
-                        '.' + str(int(peer_ip[6:8], 16)) +
-                        ':' + str(int(peer_port, 16))]
+            peer_ip = ["%i.%i.%i.%i" %
+                       (int(peer_hex_id[0:2], 16),
+                        int(peer_hex_id[2:4], 16),
+                        int(peer_hex_id[4:6], 16),
+                        int(peer_hex_id[6:8], 16))]
+            peer_port = ["%i" % int(peer_hex_id[8:12], 16)]
 
-            peer_id.append(one_peer)
-            # print '%02i' % i,
-            # print '%03i' % start,
-            # print '%03i' % end,
-            # print peer_hex_id,
-            # print peer_ip,
-            # print peer_port
+            mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            mySocket.setblocking(0)
+            peer = Peer(peer_ip, peer_port, mySocket)
+            self.candidate_peers.append(peer)
 
-        # Wrap it up into a [peer_ip, peer_port]
-        self.candidate_peers = peer_id
+    # Connect to one peer for now
+    def connect_to_peers(self):
+        if self.max_connections > len(self.peers):
+            # How many should we add
+            peers_to_add = self.max_connections - len(self.peers)
+            print 'Trying to connect to %d more peer(s)' % (peers_to_add)
+
+            for peer in range(0, peers_to_add):
+                # try:
+                #     peer.mySocket.connect(())
+                pass
 
     def run(self):
         # enters thread
@@ -101,7 +108,6 @@ class PeerManager(threading.Thread):
     def spawn_peer(self):
         peer = Peer(self.peerID)
         self.peers.append(Peer())
-
 
 # TESTING CODE##################
 

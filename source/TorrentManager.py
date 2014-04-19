@@ -33,6 +33,7 @@ class TorrentManager:
         self.port = data['port']
         self.compact = data['compact']
         self.no_peer_id = data['no_peer_id']
+        self.max_connections = data['max_connections']
 
         # Check to see if it is a multi-file torrent or a single-file torrent
         # Multi File
@@ -58,7 +59,7 @@ class TorrentManager:
         self.TrackM1 = TrackerManager(data)
         print 'Initialized'
         print 'Initializing Peer Manager...',
-        self.PeerM1 = PeerManager(self.peer_id)
+        self.PeerM1 = PeerManager(self.peer_id, self.max_connections)
         print 'Initialized'
         print 'Initializing Piece Manager...',
         self.PieceM1 = PieceManager(self.piece_length)
@@ -73,21 +74,5 @@ class TorrentManager:
         self.TrackM1.TorM1 = self
         self.PieceM1.TorM1 = self
         self.PeerM1.TorM1 = self
-
-    # Kill all of the Managers
-    def kill_subordinates(self):
-        print ''
-        if hasattr(self, 'TrackM1'):
-            print 'Killing Tracker Manager...',
-            del self.TrackM1
-            print 'Killed'
-        if hasattr(self, 'PeerM1'):
-            print 'Killing Peer Manager...',
-            del self.PeerM1
-            print 'Killed'
-        if hasattr(self, 'PieceM1'):
-            print 'Killing Piece Manager...',
-            del self.PieceM1
-            print 'Killed'
 
 ## Testing Code

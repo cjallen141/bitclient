@@ -4,11 +4,11 @@ from Queue import Queue
 
 
 class Peer(threading.Thread):
-#Attributes
+# Attributes
 # 	ipAddress - peer ip address
 # 	portNumber - peer port number
 #	client_id  - client_id used by application to broadcast to peers
-#	pm_id	- id # given by PeerManager,
+# pm_id	- id # given by PeerManager,
 #				only really used for internal purposes of the pm
 #	download_block_q - downloaded blocks
 #				in queue to be put into the main downloaded file
@@ -28,70 +28,64 @@ class Peer(threading.Thread):
 # get_downloaded_blocks()
 # listen_for_incoming_requests()
 
-	def __init__(self,pm_id, client_id, ipAddress, portNumber, next_desired_block_q):
-		threading.Thread.__init__(self)
-		self.client_id = client_id
-		self.ipAddress = ipAddress
-		self.portNumber= portNumber
-		self.next_desired_block_q = next_desired_block_q
+    def __init__(self, ipAddress, portNumber, mySocket):
+        threading.Thread.__init__(self)
+        self.ipAddress = ipAddress
+        self.portNumber = portNumber
+        self.mySocket = mySocket
 
-		self.download_block_q = Queue(0)
-		
-		s
+        # set internals
+        self.connection_alive = 0
 
-		#set internals
-		self.connection_alive = 0
-	def run(self): #starts the peer thread
-		
-		
-		self.connect()
-		
-		print 'Thread:' + str(self.client_id) + 'done!'
+    def run(self):  # starts the peer thread
 
-	def is_connection_alive(self):
-		return connection_alive
+        self.connect()
 
-	def connect(self):
-		print 'Address:' + self.ipAddress + '\nport: ' + str(self.portNumber)
+        print 'Thread:' + str(self.client_id) + 'done!'
 
-		#handle the socket connection 
+    def is_connection_alive(self):
+        return connection_alive
 
+    def connect(self):
+        print 'Address:' + self.ipAddress + '\nport: ' + str(self.portNumber)
 
-	def decode_bitfield(self):
-		print "decode"
-		#read the bitfield from the handshaking. 
-		#should be able to return to the PeerMgr available blocks
-		#think should use bitarray for this. Makes it into an array of logicals. That would be easy
-		#to index and check with
+        # handle the socket connection
 
-	def get_new_desired_block(self):
-		return self.next_desired_block_q.get() 
+    def decode_bitfield(self):
+        print "decode"
+        # read the bitfield from the handshaking.
+        # should be able to return to the PeerMgr available blocks
+        # think should use bitarray for this. Makes it into an array of logicals. That would be easy
+        # to index and check with
 
-	def ready_to_save_blocks(self):
-		#this function is called to ask the peer if it has blocks in its queue ready to store into 
-		# the main block storage. 
-		return not self.download_block_q.empty()
+    def get_new_desired_block(self):
+        return self.next_desired_block_q.get()
 
-	def add_block_to_queue(self, block):
-		self.download_block_q.put(block)
+    def ready_to_save_blocks(self):
+        # this function is called to ask the peer if it has blocks in its queue ready to store into
+        # the main block storage.
+        return not self.download_block_q.empty()
 
-	def get_downloaded_blocks(self):
-		#returns all the objects currently in the download block queue
-		#returned as list in no particular order
-		x = []
-		while not self.download_block_q.empty():
-			x.append(self.download_block_q.get())
+    def add_block_to_queue(self, block):
+        self.download_block_q.put(block)
 
-		if self.download_block_q.empty():
-			print 'emptied peer queue'
-		return x
+    def get_downloaded_blocks(self):
+        # returns all the objects currently in the download block queue
+        # returned as list in no particular order
+        x = []
+        while not self.download_block_q.empty():
+            x.append(self.download_block_q.get())
+
+        if self.download_block_q.empty():
+            print 'emptied peer queue'
+        return x
 
 
 
 
-#########TESTING CODE############
+# TESTING CODE############
 
-##testing next_desired_block_q
+# testing next_desired_block_q
 
 # blocks_q = Queue(0)
 # blocks_q.put('0')
@@ -129,5 +123,3 @@ class Peer(threading.Thread):
 
 # x = peer.get_downloaded_blocks()
 # print x
-
-
