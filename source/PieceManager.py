@@ -1,50 +1,62 @@
 from Queue import Queue
 import Decoder 
 import sys
+from bitstring import BitArray
+import math 
+import struct
 
+
+PIECE_HASH_LENGTH = 20 		#number of bytes per piece in the hash list
+#BLOCK_SIZE = 2**14
+BLOCK_SIZE = 1 				#size in bytes of a block
 class PieceManager:
 	# Attributes
     # Constructors
-    def __init__(self, piece_byte_length):
+    def __init__(self, file_info, piece_byte_length, hash_piece_list, total_length):
 
-    	self.PIECE_HASH_LENGTH = 20 #the length of the hash for the piece
-    								# should always be a 20byte number
         self.piece_byte_length = piece_byte_length #total number of bytes in a piece 
+        self.total_length = total_length #total length of the file in bytes
         self.downloaded = 0
-        self.uploaded = 0
-        self.corrupt = 0
+       	self.hash_piece_list = hash_piece_list
+       	self.file_info = file_info #
+
 
         self.piece_list = [] #used to initially hold all the pieces. during normal mode, this will be empty
-        self.num_of_pieces = 0
+
+       	self.generate_piece_list()
+       	##self.read_piece_list(self.hash_piece_list)
+
 
         self.desired_piece_q = Queue() #holds all the currently desired pieces. 
         
         self.downloaded_piece_list = [] #list of completed downloaded pieces.This should be kept
         								#ordered by the piece index
         self.downloaded_piece_q = Queue() #queue of downloaded pieces from peers
+
     # Methods
+ 
     def is_finished_downloading(self):
     	pass
     	#check if the file is completely downloaded
 
-    def read_piece_list(self, hash_piece_list):
-        #this will parse the piece_list given to it by the trackermanager
+    def generate_piece_list(self):
+        #this will parse the piece_list given to it by the tracker manager
         #
-    	assert (len(hash_piece_list) % self.PIECE_HASH_LENGTH == 0 ), \
+    	assert (len(self.hash_piece_list) % PIECE_HASH_LENGTH == 0 ), \
     	 "Check piece list size. Must be equal to piece_byte_length"
     	x=0
     	idx=0
-    	while(x< (len(hash_piece_list))):
+    	while(x< (len(self.hash_piece_list))):
     	    #iterate over the hash string and extract out the hashes
-    		#popluates the piece_list list with piece objects
-    		self.piece_list.append(Piece(idx, hash_piece_list[x:(x+self.PIECE_HASH_LENGTH-1)]))
+    		#populates the piece_list list with piece objects
+    		self.piece_list.append(Piece(idx, self.hash_piece_list[x:(x+PIECE_HASH_LENGTH-1)]))
     		self.num_of_pieces = self.num_of_pieces + 1
     		
-       		x = x+self.PIECE_HASH_LENGTH
+       		x = x+PIECE_HASH_LENGTH
        		idx=idx+1 #increment piece index
 
        	#sanity check to make sure that is always correct	
-       	assert len(self.piece_list) is len(hash_piece_list)/self.PIECE_HASH_LENGTH , \
+       	assert len(self.piece_list) is len(self.hash_piece_list)/PIECE_HASH_LENGTH , \
        		"the piece list doesn't have the correct number of pieces"
 
     def gen_desired_piece_q(self):
@@ -84,24 +96,25 @@ class Piece:
 
 	# Constructors
 	def __init__(self,idx, hash):
-		self.idx = idx
+		self.idx = idx	#this should be a 4 byte number to pass as message
 		self.hash = hash
 		self.downloaded = False #indicates if all the data for the Piece has been downloaded
 		self.verified = False 	#indicates if the Piece has been successfully verified with hash
 		self.loaded = False		#indicates if piece is currently loaded in mem
 
-		self.data = []
+		self.num_blocks = int(math.ceil(float()))
 		self.block_offset = 0 
-		self.block_length = 16384
+		self.blocks = []
+		self.init_blocks()
+
+
 	def __str__(self):
 		#prints out the piece. <idx>: <hash> 
 		out = 'Piece idx: ' + str(self.idx) + ' Hash: ' + str(self.hash) + ' DL: ' + str(self.downloaded) \
 		+ ' Ver: ' + str(self.verified)
 		return out
 
-
 	#Properties
-
 	def block_offset():
 	    doc = "The block_offset property."
 	    def fget(self):
@@ -124,8 +137,13 @@ class Piece:
 	    return locals()
 	block_length = property(**block_length())
 
+	
 
 	# Methods
+	def init_blocks(self):
+		pass
+
+
 	def verify_piece(self):
 		#attempts to verify the piece against its hash value. returns boolean of result
 		#will also set the verified to 1 
@@ -143,17 +161,20 @@ class Piece:
 		else:
 			return 0
 
+class Block:
+	def __init__(self,offset_idx,size):
+		self.size = size
+		self.offset_idx = offset_idx
 
+		self.data = []
+		self.downloaded = 0
 
 
 ###testing 
 if __name__ == '__main__':
-	pm = PieceManager(16384)
+	pm = PieceManager('',16384, \
+		"Itshouldbetwentybit_Itshouldbetwentybit_Itshouldbetwentybit_Itshouldbetwentybit_", 4)
 
-	pm.read_piece_list("Itshouldbetwentybit_Itshouldbetwentybit_Itshouldbetwentybit_Itshouldbetwentybit_")
-
-
-	piece_q = pm.gen_desired_piece_q()
 
 	while piece_q.empty() ==0:
 		piece = piece_q.get()
