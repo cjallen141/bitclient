@@ -1,6 +1,7 @@
 from Queue import Queue
 import Decoder 
 import sys
+import os
 from bitstring import BitArray
 import math 
 import struct
@@ -8,9 +9,24 @@ import struct
 
 PIECE_HASH_LENGTH = 20 		#number of bytes per piece in the hash list
 #BLOCK_SIZE = 2**14
-BLOCK_SIZE = 1 				#size in bytes of a block
+BLOCK_SIZE = 2**14 				#size in bytes of a block
+###############################################################
 class PieceManager:
-	# Attributes
+	# INTERFACE
+	#
+	#variables:
+	#
+	#	desired_piece_q  	-Queue that holds all the currently desired pieces
+	#	downloaded_piece_q	-Queue to PUT downloaded pieces after completed download of pieces
+	#	num_of_pieces		- total number of pieces
+	#	f 					-file to write data to 
+	#	
+	#methods:
+	#
+	#	is_finished_downloading() -checks if the file has been completely downloaded
+	#
+	#	print_progress() 		-prints the current downloaded piece list with missing spaces for
+	#								pieces not downloaded
     # Constructors
     def __init__(self, file_info, piece_byte_length, hash_piece_list, total_length):
 
@@ -19,7 +35,7 @@ class PieceManager:
         self.downloaded = 0
        	self.hash_piece_list = hash_piece_list
        	self.file_info = file_info #
-
+       	self.num_of_pieces = 0
 
         self.piece_list = [] #used to initially hold all the pieces. during normal mode, this will be empty
 
@@ -30,8 +46,12 @@ class PieceManager:
         self.desired_piece_q = Queue() #holds all the currently desired pieces. 
         
         self.downloaded_piece_list = [] #list of completed downloaded pieces.This should be kept
-        								#ordered by the piece index
+        								#     ordered by the piece index
         self.downloaded_piece_q = Queue() #queue of downloaded pieces from peers
+
+
+       # f=open(file_info['file_name'],'a+')
+
 
     # Methods
  
@@ -90,20 +110,39 @@ class PieceManager:
     		sys.stdout.flush()
     		#may want to move the actual printing to another function if want to format a bunch together
     		#the output looks like this: 'Downloaded Pieces: |_|_|_|#|#|....' where the #'s are downloaded
+###############################################################
 
+###############################################################
 class Piece:
-	# Attributes
+	#INTERFACE
+	#
+	#variables:
+	#	idx 				-Piece index 
+	#	hash 				-20 byte has that corresponds to the data in the piece 
+	#	num_blocks  		-number of total blocks in the Piece
+	# 	blocks[]			-list of Block objects. This should always be ordered by increasing block offset
+	#	downloaded  		-(BOOLEAN) is the entire piece downloaded 
+	#	verified			-(BOOLEAN) has the piece been verified 
+	# 	
+	#   
+	#methods:
+	#
+	#	__str__ 			-overrides the string method to print the information about the piece
+	#	init_blocks()		-creates initial block objects and puts them into the blocks[] list
+	#	verify_piece		-checks the piece against the hash. if all blocks have been downloaded 
+	#							properly it will return True. once set, it will always return true
+	#	extract_data		-compiles all the block data into a single string and returns 
 
-	# Constructors
+
 	def __init__(self,idx, hash):
-		self.idx = idx	#this should be a 4 byte number to pass as message
+		self.idx = idx	#
 		self.hash = hash
 		self.downloaded = False #indicates if all the data for the Piece has been downloaded
 		self.verified = False 	#indicates if the Piece has been successfully verified with hash
 		self.loaded = False		#indicates if piece is currently loaded in mem
 
 		self.num_blocks = int(math.ceil(float()))
-		self.block_offset = 0 
+
 		self.blocks = []
 		self.init_blocks()
 
@@ -114,35 +153,23 @@ class Piece:
 		+ ' Ver: ' + str(self.verified)
 		return out
 
-	#Properties
-	def block_offset():
-	    doc = "The block_offset property."
-	    def fget(self):
-	        return self._block_offset
-	    def fset(self, value):
-	        self._block_offset = value
-	    def fdel(self):
-	        del self._block_offset
-	    return locals()
-	block_offset = property(**block_offset())
-
-	def block_length():
-	    doc = "The block_length property."
-	    def fget(self):
-	        return self._block_length
-	    def fset(self, value):
-	        self._block_length = value
-	    def fdel(self):
-	        del self._block_length
-	    return locals()
-	block_length = property(**block_length())
-
 	
 
 	# Methods
 	def init_blocks(self):
 		pass
 
+	def extract_data(self):
+		#extracts data from all the blocks and returns a concatenated string of the piece
+		#	if it has not been verified it will return an empty string '' instead
+		data = []
+		if self.verified:
+			for block in self.blocks:
+				data.extend(block.data)
+
+			return ''.join(data)
+		else:
+			return ''
 
 	def verify_piece(self):
 		#attempts to verify the piece against its hash value. returns boolean of result
@@ -150,24 +177,35 @@ class Piece:
 
 		#check if it is even all here
 		if not self.downloaded:
-			return 0
+			return False
 		#check against SHA1 hash. TODO
 		hash_of_data = Decoder.create_hash(self.data)
 
 		if hash_of_data == self.hash:
 			self.verified = True
 			print self
-			return 1
+			return True
 		else:
-			return 0
+			return False
+###############################################################
 
+###############################################################
 class Block:
+	#INTERFACE
+	#
+	# variables:
+	#	size 				-Size in bytes of the block
+	#	offset_idx			-block offset index. This is the offset in the piece data
+	#	data 				-actual file data! this will be a string 
+	#	downloaded 			-(BOOLEAN) is the block downloaded	
 	def __init__(self,offset_idx,size):
 		self.size = size
 		self.offset_idx = offset_idx
 
 		self.data = []
 		self.downloaded = 0
+###############################################################
+
 
 
 ###testing 
