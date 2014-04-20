@@ -47,12 +47,15 @@ class PieceManager:
        									#     ordered by the piece index
         self.downloaded_piece_q = Queue() #queue of downloaded pieces from peers
 
-
        # f=open(file_info['file_name'],'a+')
     # Methods
  
     def is_finished_downloading(self):
-    	pass
+    	for piece in self.piece_list:
+    		if piece.verified == False:
+    			return False
+
+    	return True
     	#check if the file is completely downloaded
 
     def generate_piece_list(self):
@@ -75,9 +78,8 @@ class PieceManager:
     			piece_size = bytes_remaining
 
     		self.piece_list.append(Piece(idx, \
-    									self.hash_piece_list[x:(x+PIECE_HASH_LENGTH-1)], \
+    									self.hash_piece_list[x:(x+PIECE_HASH_LENGTH)], \
     									piece_size))
-
 
     		self.num_of_pieces = self.num_of_pieces + 1
     		
@@ -91,6 +93,9 @@ class PieceManager:
 
        	assert bytes_remaining == 0 , \
        		"there are bytes left over not put into piece. what gives..."
+       	assert x == len(self.hash_piece_list)
+
+       	assert x == self.num_of_pieces*PIECE_HASH_LENGTH
 
     def gen_desired_piece_q(self):
     	#explicitly removing the piece from self.pieces and putting it into the desired queue
@@ -98,12 +103,13 @@ class PieceManager:
     		"piece list is empty, something went wrong"
 
     	print 'generating desired piece q..'
-    	while len(self.piece_list) > 0:
+    	x = 0 
+    	for piece in self.piece_list:
 
-    		piece = self.piece_list.pop(0)
-    		print piece
+    		#piece = self.piece_list.pop(0)
+    		#print piece
     		self.desired_piece_q.put(piece)
-    	return self.desired_piece_q
+    	#return self.desired_piece_q
 
     def print_progress(self):
     	#print the current progress of the file. This will be helpful for debugging and using the 
@@ -144,11 +150,13 @@ class Piece:
 	#
 	#	__str__ 			-overrides the string method to print the information about the piece
 	#	init_blocks()		-creates initial block objects and puts them into the blocks[] list
-	#	verify_piece		-checks the piece against the hash. if all blocks have been downloaded 
+	# 	is_downloaded()		-checks if all the blocks in the piece have been downloaded 
+	#	verify_piece()		-checks the piece against the hash. if all blocks have been downloaded 
 	#							properly it will return True. once set, it will always return true
-	#	extract_data		-compiles all the block data into a single string and returns 
-
-
+	#							NOTE: THIS SHOULD ONLY BE CALLED BY THE PIECEMANAGER BECAUSE IT WILL SAY FALSE FOR PARTIALLY DOWNLOADED
+	#							 BEWARE!!@#!@#
+	#	extract_data()		-compiles all the block data into a single string and returns
+	#	clean()				-resets the Piece. Clears all data from the blocks and sets all state to undownloaded and unverified 
 	def __init__(self,idx, hashed_val, piece_size):
 		self.idx = idx	#
 		self.hash = hashed_val
@@ -168,7 +176,6 @@ class Piece:
 		+ ' Ver: ' + str(self.verified) + ' Size: ' + str(self.psize)
 		return out
 
-	
 
 	# Methods
 	def init_blocks(self):
@@ -189,33 +196,55 @@ class Piece:
 			block_offset += block_size
 
 	def extract_data(self):
-		#extracts data from all the blocks and returns a concatenated string of the piece
-		#	if it has not been verified it will return an empty string '' instead
+		#returns current data in all the blocks. if a block isn't downloaded, this will be kinda garbage
 		data = []
-		if self.verified:
-			for block in self.blocks:
-				data.extend(block.data)
+		for block in self.blocks:
+			data.extend(block.data)
+		return ''.join(data)
+		
 
-			return ''.join(data)
-		else:
-			return ''
+	def is_downloaded(self):
+		#check if all the blocks in the piece have been downloaded
+		ans = True
+		for block in self.blocks:
+			if block.downloaded == False:
+				ans = False
+		self.downloaded = ans
+		return ans 
 
-	def verify_piece(self):
+
+	def verify(self):
+		#
 		#attempts to verify the piece against its hash value. returns boolean of result
 		#will also set the verified to 1 
 
-		#check if it is even all here
+		#check all the blocks if they have been downloaded. Once they are all downloaded 
 		if not self.downloaded:
+			self.verified = False
 			return False
-		#check against SHA1 hash. TODO
-		hash_of_data = Decoder.create_hash(self.data)
-
+			
+		#check against SHA1 hash.
+		hash_of_data = Decoder.create_hash(self.extract_data())
+		print "checking piece, data: " + str(self.extract_data())
+		print "size: " + str(len(self.extract_data()))
+		print "hash : " + str(hash_of_data)
+		print "hash in list: " + str(self.hash)
 		if hash_of_data == self.hash:
 			self.verified = True
-			print self
 			return True
 		else:
+			self.verified = False
 			return False
+
+
+	def clean(self):
+		#this is used to clearout a piece . basically resets it if the data is bad
+		for block in self.blocks:
+			block.data = ''
+			block.downloaded = False
+		self.downloaded = False
+		self.verified = False
+
 ###############################################################
 
 ###############################################################
@@ -232,7 +261,7 @@ class Block:
 		self.block_size = size
 		self.offset_idx = offset_idx
 
-		self.data = []
+		self.data = ''
 		self.downloaded = False
 	def __str__(self):
 		out = 'Block idx: ' + str(self.idx) + ' Offset idx: ' + str(self.offset_idx) + ' Size: ' + str(self.block_size) \
@@ -246,9 +275,6 @@ class Block:
 ############testing############################################
  
 if __name__ == '__main__':
-
-	
-	
 	#######testing#
 	#file will be 155 bytes long. Each piece will hold 10 bytes. Each block will be 2 bytes long.
 	#intentionally making it not even divisible
@@ -266,17 +292,14 @@ if __name__ == '__main__':
 	hash_list = []
 	x=0
 	while(x<file_length):
-		hash_list.extend(Decoder.create_hash(file_data[x:x+pSize-1]))
+		hash_list.extend(Decoder.create_hash(file_data[x:x+pSize]))
 
 		x = x + pSize
 	hash_list = ''.join(hash_list)
 
 	print 'length of hash_list (length*pSize): ' + str( len(hash_list))
 
-
 	#now start up the PieceManager
-
-
 	pm = PieceManager('file.txt',pSize, hash_list, file_length)
 	print "starting Piecemanager...."
 
@@ -288,4 +311,44 @@ if __name__ == '__main__':
 		for block in piece.blocks:
 			print "\t" + str(block)
 
+	#check generate desired piece q
+	pm.gen_desired_piece_q()
+	# print len(pm.piece_list)
+	
+	# piece = pm.desired_piece_q.get()
+	# print piece
+
+	# print len(pm.piece_list)
+
+	# #checking that the pieces are passed by reference. So any change to a piece got from desired_piece_q reflects that change in the piece_list!
+	# piece.blocks[0].data = 'hello world'
+	# index = piece.idx
+	# print pm.piece_list[index].blocks[0].data
+
+	## testing adding all the data, verifying the data against the hash, and checking if the is_downloaded() function works
+
+	#testing is_downloaded() when not downloaded
+	
+
+	assert (pm.is_finished_downloading() == False)
+
+	#populated data into pieces
+
+
+	print file_data[0:4]
+	print file_data[4:8]
+	index_into_file = 0
+	for piece in pm.piece_list:
+		for block in piece.blocks:
+			block.downloaded = True
+			block.data = file_data[index_into_file:index_into_file+block.block_size]
+			index_into_file += block.block_size
+
+		piece.is_downloaded()
+		print piece.verify()
+
+	for piece in pm.piece_list:
+		print piece.extract_data()
+
+	
 	
