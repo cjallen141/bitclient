@@ -30,9 +30,14 @@ class Peer(threading.Thread):
 
     def __init__(self, ipAddress, portNumber, mySocket):
         threading.Thread.__init__(self)
-        self.ipAddress = ipAddress
-        self.portNumber = portNumber
-        self.mySocket = mySocket
+        self.ip_address = ipAddress
+        self.port_number = portNumber
+        self.my_socket = mySocket
+        self.connection_state = False
+        self.choking = True
+        self.interested = False
+        self.peer_choking = True
+        self.peer_interested = False
 
         # set internals
         self.connection_alive = 0
@@ -55,14 +60,16 @@ class Peer(threading.Thread):
         print "decode"
         # read the bitfield from the handshaking.
         # should be able to return to the PeerMgr available blocks
-        # think should use bitarray for this. Makes it into an array of logicals. That would be easy
+        # think should use bitarray for this.
+        # Makes it into an array of logicals. That would be easy
         # to index and check with
 
     def get_new_desired_block(self):
         return self.next_desired_block_q.get()
 
     def ready_to_save_blocks(self):
-        # this function is called to ask the peer if it has blocks in its queue ready to store into
+        # this function is called to ask the peer
+        # if it has blocks in its queue ready to store into
         # the main block storage.
         return not self.download_block_q.empty()
 

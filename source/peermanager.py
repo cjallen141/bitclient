@@ -32,13 +32,13 @@ class PeerManager(threading.Thread):
     #   run()
     #       -this is where the thread enters
 
-    def __init__(self, peerID, max_connections):
+    def __init__(self, data):
         threading.Thread.__init__(self)
-        self.peerID = peerID
+        self.peerID = data['peer_id']
         self.peers = []
-        self.candidate_peers = []
-        self.numwant = 50  # Start off with 50 and go down
-        self.max_connections = max_connections
+        self.numwant = 50  # Start off with 50
+        self.max_connections = data['max_connections']
+        self.num_connected = 0
         self.TrackM1 = ''
         self.PieceM1 = ''
 
@@ -46,8 +46,7 @@ class PeerManager(threading.Thread):
         # new_peers[0] is the number of peers
         # new_peers[1] is the peer list
         # look in TrackerManager to figure out what the peer list is
-        new_peers = self.TrackM1.update_peer_list()
-        peer_id = []
+        new_peers = self.TrackM.update_peer_list()
 
         # Parse the list
         for i in range(0, new_peers[0]):
@@ -57,64 +56,74 @@ class PeerManager(threading.Thread):
             # The list is in big-endian so i'm not sure
             # what corresponds to what. I'm just guessing.
             peer_hex_id = new_peers[1][start:end]
-            peer_ip = ["%i.%i.%i.%i" %
-                       (int(peer_hex_id[0:2], 16),
-                        int(peer_hex_id[2:4], 16),
-                        int(peer_hex_id[4:6], 16),
-                        int(peer_hex_id[6:8], 16))]
-            peer_port = ["%i" % int(peer_hex_id[8:12], 16)]
+            peer_ip = "%i.%i.%i.%i" % \
+                (int(peer_hex_id[0:2], 16),
+                 int(peer_hex_id[2:4], 16),
+                 int(peer_hex_id[4:6], 16),
+                 int(peer_hex_id[6:8], 16))
+            peer_port = int(peer_hex_id[8:12], 16)
 
             mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            mySocket.setblocking(0)
-            peer = Peer(peer_ip, peer_port, mySocket)
-            self.candidate_peers.append(peer)
+            #mySocket.setblocking(0)
+
+            self.spawn_peer(peer_ip, peer_port, mySocket)
 
     # Connect to one peer for now
     def connect_to_peers(self):
-        if self.max_connections > len(self.peers):
+        if self.max_connections > self.num_connected:
             # How many should we add
-            peers_to_add = self.max_connections - len(self.peers)
+            peers_to_add = self.max_connections - self.num_connected
             print 'Trying to connect to %d more peer(s)' % (peers_to_add)
 
-            for peer in range(0, peers_to_add):
-                # try:
-                #     peer.mySocket.connect(())
-                pass
+            # Find a peer to connect to
+            for peer in self.peers:
+                if peers_to_add == 0:
+                    break
+                else:
+                    if peer.connection_state is False:
+                        try:
+                            peer.my_socket.connect((peer.ip_address,
+                                                    peer.port_number))
+                            peer.connection_state = True
+                            print 'connected to %s:%d' % \
+                                  (peer.ip_address, peer.port_number)
+                            peers_to_add -= 1
+                        except socket.error, e:
+                            print 'Error: %s' % e
 
     def run(self):
         # enters thread
-        print "starting Peer Manager..."
         self.manage()
-        print "closing Peer Manager..."
 
     def manage(self):
         # check status of peers
         # if no peers available, call updatePeerList
         # spawn new peers that are available
         # tell peers that are choked to idle
-        x = 0
-        while x < 2:
-            # checking if there are any peers
-            if len(self.peers) == 0:
-                self.update_peer_list()
 
-                for peer in self.peers:
-                    peer.start()
+        # First get a list of peers from the tracker
+        self.update_peer_list()
 
-                x = x + 1
-                print x
-            self.peers[:] = [peer for peer in self.peers if peer.isAlive()]
+        # Then connect to some peers
+        self.connect_to_peers()
 
-    def spawn_peer(self):
-        peer = Peer(self.peerID)
-        self.peers.append(Peer())
+        self.close_peers()
 
-# TESTING CODE##################
+    def close_peers(self):
+        for peer in self.peers:
+            if peer.connection_state is True:
+                peer.my_socket.close()
+                peer.connection_state = False
+                print 'disconnected from %s:%d' % \
+                      (peer.ip_address, peer.port_number)
 
-# create a tracker object
-# tracker = TrackerManager()
-# create peermanager object
-# peer_mgr = PeerManager(2230, tracker)
+    def spawn_peer(self, peer_ip, peer_port, mySocket):
+        peer = Peer(peer_ip, peer_port, mySocket)
+        self.peers.append(peer)
 
+    def print_peer_list(self):
+        for peer in self.peers:
+            print peer.ip_address, peer.my_state, peer.peer_state
 
-# peer_mgr.start()#starts the thread
+# class Messages:
+#     pass

@@ -1,78 +1,94 @@
 # TorrentManager.py
+import Decoder
 from TrackerManager import TrackerManager
 from peermanager import PeerManager
 from PieceManager import PieceManager
 
 
-class TorrentManager:
-    # Attributes
+def main():
 
-    # Constructors
-    def __init__(self, data):
-        # We have the data, fill in the relevant fields
-        # Mandatory Fields
-        #   announce-url
-        #   info (dictionary)
-        #       piece length
-        #       name
-        #       pieces
-        #       path
-        #       length
-        # All others are optional
+    print 'Initializing Torrent Manager...',
 
-        print 'Initializing Torrent Manager...',
+    data = {}
 
-        # Some Attributes being populated
-        #self.comment = data['comment']
-        self.info_hash = data['info_hash']
-        self.announce_url = data['announce']
-        self.piece_length = data['info']['piece length']
-        self.peer_id = data['peer_id']
-        self.state = 'started'
-        self.key = data['key']
-        self.port = data['port']
-        self.compact = data['compact']
-        self.no_peer_id = data['no_peer_id']
-        self.max_connections = data['max_connections']
+    # The first thing we want to do is have them input a file
+    # For now this is just going to be hard-coded in
+    #   because I don't want to have to input everytime
+    # file1 is a single-file torrent
+    # file2 is a multi-file torrent
+    #file1 = '../referenceFiles/TestTorrent.torrent'
+    #file2 = '../referenceFiles/WhySoccerMatters-Original.torrent'
+    #file3 = 'ThisIsNotARealFile.torrent'
+    file4 = '/Users/brent/Downloads/ubuntu-13.10-desktop-amd64.iso.torrent'
+    #file5 = '/Users/brent/Downloads/t-rice.jpg.torrent'
+    #file6 = '/Users/brent/Downloads/ProGit.pdf.torrent'
 
-        # Check to see if it is a multi-file torrent or a single-file torrent
-        # Multi File
-        if 'files' in data['info']:
-            self.multi_file = True
-            self.files = data['info']['files']
+    data['write_file'] = './ubuntu-13.10-desktop-amd64.iso'
+    data['torrent_file'] = file4
+    data['peer_id'] = 'ThisIsATestOfGTENS00'
+    data['key'] = '50EDCACE'
+    data['port'] = 61130
+    data['compact'] = 1
+    data['no_peer_id'] = 1
+    data['max_connections'] = 1
+    data['state'] = 'started'
 
-            # Run through and extract files and put them into
+    # Next we decode it
+    # decoded_data is the data from the torrent file.
+    # we will separate everything and put it into a data
+    # structure so that we don't have to do things like
+    # decoded_data['info']['piece length'] and we can
+    # do things like data['piece_length']
+    decoded_data = Decoder.bdecode_torrent(data['torrent_file'])
+    #print decoded_data
 
-        # Single File
-        else:
-            self.multi_file = False
-            self.name = data['info']['name']
-            self.length = data['info']['length']
+    # Get the SHA1 Hash for the info dictionary
+    # It has to be bencoded first
+    info = decoded_data['info']
+    info = Decoder.bencode_data(info)
+    info_hash = Decoder.create_hash(info)
 
-        print 'Initialized'
+    # Add our stuff to the data structure
+    data['info_hash'] = info_hash
+    data['piece_length'] = decoded_data['info']['piece length']
+    data['announce'] = decoded_data['announce']
 
-    # Methods
-    # Initialize all of the Managers
-    def initialize_subordinates(self):
-        data = [self.announce_url, self.info_hash, self.peer_id]
-        print 'Initializing Tracker Manager...',
-        self.TrackM1 = TrackerManager(data)
-        print 'Initialized'
-        print 'Initializing Peer Manager...',
-        self.PeerM1 = PeerManager(self.peer_id, self.max_connections)
-        print 'Initialized'
-        print 'Initializing Piece Manager...',
-        self.PieceM1 = PieceManager(self.piece_length)
-        print 'Initialized'
-        print ''
-        self.TrackM1.PeerM1 = self.PeerM1
-        self.TrackM1.PieceM1 = self.PieceM1
-        self.PeerM1.TrackM1 = self.TrackM1
-        self.PeerM1.PieceM1 = self.PieceM1
-        self.PieceM1.TrackM1 = self.TrackM1
-        self.PieceM1.PeerM1 = self.PeerM1
-        self.TrackM1.TorM1 = self
-        self.PieceM1.TorM1 = self
-        self.PeerM1.TorM1 = self
+    # Check to see if it is a multi-file torrent or a single-file torrent
+    # Multi File
+    if 'files' in decoded_data['info']:
+        data['multi_file'] = True
+        #data['files'] = decoded_data['info']['files']
 
-## Testing Code
+        # Run through and extract files and put them into a data structure
+        pass
+
+    # Single File
+    else:
+        data['multi_file'] = False
+        data['file_name'] = decoded_data['info']['name']
+        data['length'] = decoded_data['info']['length']
+
+    print 'Initialized'
+
+    print 'Initializing Tracker Manager...',
+    TrackM = TrackerManager(data)
+    print 'Initialized'
+    print 'Initializing Peer Manager...',
+    PeerM = PeerManager(data)
+    print 'Initialized'
+    print 'Initializing Piece Manager...',
+    PieceM = PieceManager(data)
+    print 'Initialized'
+    print ''
+
+    TrackM.PeerM = PeerM
+    TrackM.PieceM = PieceM
+    PeerM.TrackM = TrackM
+    PeerM.PieceM = PieceM
+    PieceM.TrackM = TrackM
+    PieceM.PeerM = PeerM
+
+    PeerM.run()
+
+if __name__ == "__main__":
+    main()

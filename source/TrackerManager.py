@@ -8,16 +8,17 @@ class TrackerManager:
 
     # Constructors
     def __init__(self, data):
-        self.announce_url = data[0]
+        self.data = data
+        self.announce_url = data['announce']
 
         self.PeerM1 = ''
         self.PieceM1 = ''
 
     # Methods
     def connect_to_tracker(self, info_hash, peer_id, length,
-                           downloaded, uploaded, state, port,
-                           corrupt, key, numwant, compact,
-                           no_peer_id):
+                           state, port, compact, no_peer_id,
+                           key, downloaded, uploaded, corrupt,
+                           numwant):
 
         if 'http://' in self.announce_url:
             print 'Sending GET Request to Tracker'
@@ -38,7 +39,7 @@ class TrackerManager:
 
             # Send the HTTP GET
             response = requests.get(self.announce_url, params=params)
-            print  response.url
+            #print  response.url
             #print response.url
             #print response.content
 
@@ -65,18 +66,18 @@ class TrackerManager:
 
     def update_peer_list(self):
         # Connect to the tracker
-        peer_data = self.connect_to_tracker(self.TorM1.info_hash,
-                                            self.TorM1.peer_id,
-                                            self.TorM1.length,
-                                            self.PieceM1.downloaded,
-                                            self.PieceM1.uploaded,
-                                            self.TorM1.state,
-                                            self.TorM1.port,
-                                            self.PieceM1.corrupt,
-                                            self.TorM1.key,
-                                            self.PeerM1.numwant,
-                                            self.TorM1.compact,
-                                            self.TorM1.no_peer_id)
+        peer_data = self.connect_to_tracker(self.data['info_hash'],
+                                            self.data['peer_id'],
+                                            self.data['length'],
+                                            self.data['state'],
+                                            self.data['port'],
+                                            self.data['compact'],
+                                            self.data['no_peer_id'],
+                                            self.data['key'],
+                                            self.PieceM.downloaded,
+                                            self.PieceM.uploaded,
+                                            self.PieceM.corrupt,
+                                            self.PeerM.numwant)
 
         # We got some peer data back, let's parse it and
         # give the peers to the peer manager
@@ -102,8 +103,7 @@ class TrackerManager:
             else:
                 pass
         else:
-            # If we don't get anything back from the tracker then
-            # we can't really go any further
-            torrentStart.exit_grace(self.TorM1)
+            assert peer_data != 0, \
+                "Tracker gave back bad data"
 
 # Testing Code
