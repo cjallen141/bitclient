@@ -1,6 +1,6 @@
 # Tracker Manager Class
+from Decoder import *
 import requests
-import Decoder
 
 
 class TrackerManager:
@@ -11,8 +11,8 @@ class TrackerManager:
         self.data = data
         self.announce_url = data['announce']
 
-        self.PeerM1 = ''
-        self.PieceM1 = ''
+        self.peer_mgr = ''
+        self.piece_mgr = ''
 
     # Methods
     def connect_to_tracker(self, info_hash, peer_id, length,
@@ -55,7 +55,7 @@ class TrackerManager:
                 ret_val = 0
             else:
                 print 'Received GET Response from Tracker'
-                result = Decoder.bdecode_data(response.content)
+                result = bdecode_data(response.content)
                 ret_val = result
                 print 'Received Peer Candidate List'
             return ret_val
@@ -74,16 +74,16 @@ class TrackerManager:
                                             self.data['compact'],
                                             self.data['no_peer_id'],
                                             self.data['key'],
-                                            self.PieceM.downloaded,
-                                            self.PieceM.uploaded,
-                                            self.PieceM.corrupt,
-                                            self.PeerM.numwant)
+                                            self.piece_mgr.downloaded,
+                                            self.piece_mgr.uploaded,
+                                            self.piece_mgr.corrupt,
+                                            self.peer_mgr.numwant)
 
         # We got some peer data back, let's parse it and
         # give the peers to the peer manager
         if peer_data != 0:
             if isinstance(peer_data['peers'], str):
-                ascii_peer_data = Decoder.bin2asc(peer_data['peers'])
+                ascii_peer_data = bin2asc(peer_data['peers'])
 
                 # Each two hex digits counts as one character and there are
                 # 6 characters per host:
@@ -97,6 +97,7 @@ class TrackerManager:
                 # to divide by 12 because now one hex digit = one character
 
                 num_peers = len(ascii_peer_data)/12
+                print ''
 
                 # Send it off to Peer Manager to fix
                 return [num_peers, ascii_peer_data]

@@ -1,6 +1,7 @@
 import os.path
 import bencode
 import hashlib
+from struct import *
 
 
 #--------------Encoders/Decoders---------------
@@ -32,6 +33,11 @@ def bencode_data(data):
 def bdecode_data(data):
     decoded_data = bencode.bdecode(data)
     return decoded_data
+
+
+def four_bytes_to_int(data):
+    decoded_data = unpack('!i', data)
+    return decoded_data[0]
 
 
 # Used to change escaped binary to url encoded

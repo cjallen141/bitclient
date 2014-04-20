@@ -1,5 +1,5 @@
 # TorrentManager.py
-import Decoder
+from Decoder import *
 from TrackerManager import TrackerManager
 from peermanager import PeerManager
 from PieceManager import PieceManager
@@ -32,6 +32,7 @@ def main():
     data['no_peer_id'] = 1
     data['max_connections'] = 1
     data['state'] = 'started'
+    data['numwant'] = 5
 
     # Next we decode it
     # decoded_data is the data from the torrent file.
@@ -39,14 +40,14 @@ def main():
     # structure so that we don't have to do things like
     # decoded_data['info']['piece length'] and we can
     # do things like data['piece_length']
-    decoded_data = Decoder.bdecode_torrent(data['torrent_file'])
+    decoded_data = bdecode_torrent(data['torrent_file'])
     #print decoded_data
 
     # Get the SHA1 Hash for the info dictionary
     # It has to be bencoded first
     info = decoded_data['info']
-    info = Decoder.bencode_data(info)
-    info_hash = Decoder.create_hash(info)
+    info = bencode_data(info)
+    info_hash = create_hash(info)
 
     # Add our stuff to the data structure
     data['info_hash'] = info_hash
@@ -81,12 +82,12 @@ def main():
     print 'Initialized'
     print ''
 
-    TrackM.PeerM = PeerM
-    TrackM.PieceM = PieceM
-    PeerM.TrackM = TrackM
-    PeerM.PieceM = PieceM
-    PieceM.TrackM = TrackM
-    PieceM.PeerM = PeerM
+    TrackM.peer_mgr = PeerM
+    TrackM.piece_mgr = PieceM
+    PeerM.track_mgr = TrackM
+    PeerM.piece_mgr = PieceM
+    PieceM.track_mgr = TrackM
+    PieceM.peer_mgr = PeerM
 
     PeerM.run()
 
