@@ -28,13 +28,14 @@ def main():
     data['write_file'] = './ubuntu-13.10-desktop-amd64.iso'
     data['torrent_file'] = file1
     data['peer_id'] = 'ThisIsATestOfGTENS00'
-    data['key'] = '50EDCACE'
+    #data['key'] = '50EDCACE'
+    data['key'] = '0DDB4BE2'
     data['port'] = 61130
     data['compact'] = 1
     data['no_peer_id'] = 1
-    data['max_connections'] = 5
+    data['max_connections'] = 2
     data['state'] = 'started'
-    data['numwant'] = 5
+    data['numwant'] = 200
 
     # Next we decode it
     # decoded_data is the data from the torrent file.

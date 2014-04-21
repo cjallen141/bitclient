@@ -46,7 +46,7 @@ class Peer(threading.Thread):
         self.keep_alive_max = 50000000
         self.recv_size = 100000
         self.write_size = 100000
-        self.max_timeout = 2
+        self.max_timeout = 10
         self.can_receive = True
         self.cur_piece = ''
         self.block_size = 2 ** 14
@@ -54,11 +54,11 @@ class Peer(threading.Thread):
         # state can be
         # init: peer manager checks this state when it tries to start
         #       new peers and will start the peer if it is in 'init'
-        # connected: peers can connect
+        # connected: client is conected to the other peer
+        # disconnected: client is trying to connect to other peer
         # failed: peers tried to connect and failed
         #         or something went wrong and it is
         #         not doing work anymore
-        # error: if the peer has too many errors then it errors out
         # done: peer is done with work for now
         self.connection_state = 'init'
         self.choking = True
@@ -100,7 +100,12 @@ class Peer(threading.Thread):
 
             # Receive a message
             if self.can_receive:
-                self.read_buf = self.my_socket.recv(self.recv_size)
+                try:
+                    self.read_buf = self.my_socket.recv(self.recv_size)
+                except (socket.error, socket.timeout) as err:
+                    self.num_errors += 1
+                    print 'Recv from %s:%d failed: %s' % \
+                        (self.ip_address, self.port_number, err)
 
                 # Get the length of the message and then unpack
                 msg_length = four_bytes_to_int(self.read_buf[0:4])
@@ -114,7 +119,7 @@ class Peer(threading.Thread):
                     try:
                         self.read_buf += self.my_socket.recv(self.recv_size)
                         print 'Recv from %s:%d success' % self.info
-                    except socket.error as err:
+                    except (socket.error, socket.timeout) as err:
                         self.num_errors += 1
                         print 'Recv from %s:%d failed: %s' % \
                             (self.ip_address, self.port_number, err)
@@ -204,7 +209,7 @@ class Peer(threading.Thread):
                         # Create the keep alive message
                         self.my_socket.sendall('')
                         print 'Sent keep alive to %s:%d' % self.info
-            except socket.error as err:
+            except (socket.error, socket.timeout) as err:
                 self.can_receive = False
                 self.num_errors += 1
                 print 'Cannot send to %s:%d: %s' % \
@@ -224,7 +229,7 @@ class Peer(threading.Thread):
             self.my_socket.connect(self.info)
             self.connection_state = 'connected'
             print 'Connected to %s:%d' % self.info
-        except socket.error as err:
+        except (socket.error, socket.timeout) as err:
             self.num_errors += 1
             print 'Cannot connect to %s:%d: %s' % \
                   (self.info[0], self.info[1], err)
@@ -243,10 +248,10 @@ class Peer(threading.Thread):
             # close the connection but
             # we can return this time
             try:
-                self.my_socket.send(self.write_buf)
+                self.my_socket.sendall(self.write_buf)
                 self.write_buf = ''
                 print 'Sent Handshake to %s:%d' % self.info
-            except socket.error as err:
+            except (socket.error, socket.timeout) as err:
                 self.num_errors += 1
                 print 'Send fail to %s:%d: %s' % \
                       (self.info[0], self.info[1], err)
@@ -261,7 +266,7 @@ class Peer(threading.Thread):
                 # print 'Message Length: %d' % len(self.read_buf)
                 # print 'Message: ',
                 # Decoder.print_hex(self.read_buf)
-            except socket.error as err:
+            except (socket.error, socket.timeout) as err:
                 self.num_errors += 1
                 print 'Recv fail from %s:%d: %s' % \
                       (self.info[0], self.info[1], err)

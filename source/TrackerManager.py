@@ -39,7 +39,6 @@ class TrackerManager:
 
             # Send the HTTP GET
             response = requests.get(self.announce_url, params=params)
-            #print  response.url
             #print response.url
             #print response.content
 
