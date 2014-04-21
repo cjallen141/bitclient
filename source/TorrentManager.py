@@ -42,6 +42,7 @@ def main():
     # do things like data['piece_length']
     decoded_data = bdecode_torrent(data['torrent_file'])
     #print decoded_data
+    #print decoded_data
 
     # Get the SHA1 Hash for the info dictionary
     # It has to be bencoded first
@@ -68,6 +69,7 @@ def main():
         data['multi_file'] = False
         data['file_name'] = decoded_data['info']['name']
         data['length'] = decoded_data['info']['length']
+        data['pieces_hash'] = decoded_data['info']['pieces']
 
     print 'Initialized'
 

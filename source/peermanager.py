@@ -41,8 +41,8 @@ class PeerManager(threading.Thread):
         self.max_connections = data['max_connections']
         self.info_hash = data['info_hash']
         self.num_connected = 0
-        self.TrackM = ''
-        self.PieceM = ''
+        self.track_mgr = ''
+        self.piece_mgr = ''
 
         self.count = 0
 
@@ -91,7 +91,10 @@ class PeerManager(threading.Thread):
             num += 1
 
             # Ask the Piece Manager if we are done
-            pass
+            if self.piece_mgr.is_finished_downloading():
+                for peer in self.peers:
+                    peer.connection_state = 'done'
+                done = True
 
             # Go through and delete any failed ones
             for peer in self.peers:
@@ -142,16 +145,8 @@ class PeerManager(threading.Thread):
                 print 'multiple peer found'
                 return
         peer = Peer(peer_ip, peer_port, self.data['info_hash'],
-                    self.peer_id, self)
+                    self.peer_id, self.piece_mgr)
         self.peers.append(peer)
-
-    def done_downloading(self):
-        self.count += 1
-        if self.count is 20:
-            return True
-        else:
-            return False
-        #return self.piece_mgr.doneDownloading()
 
     def print_peer_list(self):
         for peer in self.peers:
