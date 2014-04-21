@@ -2,7 +2,6 @@ from struct import *
 from Decoder import *
 import socket
 import threading
-from Queue import Queue
 from time import sleep
 from bitstring import BitArray
 
@@ -53,6 +52,7 @@ class Peer(threading.Thread):
         self.block_size = 2 ** 14
 
         # state can be
+        # init: just getting started
         # disconnected: all peers are init to this
         # connected: peers can connect
         # failed: peers tried to connect and failed
@@ -70,7 +70,7 @@ class Peer(threading.Thread):
         self.info = (self.ip_address, self.port_number)
 
     def run(self):  # starts the peer thread
-        while (self.connection_state == 'disconnected'):
+        while (self.connection_state == 'init'):
             # Check if we exceed the errors
             if self.check_errors() is True:
                 break
@@ -83,7 +83,7 @@ class Peer(threading.Thread):
 
             # Check if we exceeded the errors
             if self.check_errors() is True:
-                self.connection_state = 'done'
+                self.connection_state = 'failed'
 
             # Do a handshake if we need to
             if self.handshake_done is False:
@@ -162,13 +162,13 @@ class Peer(threading.Thread):
                 if self.cur_piece == '':
                     self.get_new_desired_piece()
                     if self.cur_piece == '':
-                        # Don't do anything, we are probably done downloading
-                        pass
+                        self.done()
                 else:
                     # Get a block to request
                     self.cur_block = self.get_new_desired_block()
                     if self.cur_block == '':
                         # All the blocks have been downloaded
+                        self.cur_piece.is_downloaded()
                         self.piece_mgr.downloaded_piece_q.put(self.cur_piece)
                         print 'Downloaded Piece %d from %s:%d' % \
                               (self.cur_piece.idx, self.info[0], self.info[1])
@@ -203,12 +203,8 @@ class Peer(threading.Thread):
                     (self.info[0], self.info[1], err)
 
             print ''
-            sleep(3)
 
-        if self.connection_state == 'connected' or \
-           self.connection_state == 'done':
-            self.disconnect()
-        print ''
+        return
 
     def connect(self):
         # Try to connect, set state to fail
@@ -289,16 +285,49 @@ class Peer(threading.Thread):
                  self.info_hash,
                  self.client_peer_id)
 
+    # A peer has disconnected for some reason
+    # Basically the same as failed now
     def disconnect(self):
-        print 'Disconnected from %s:%d' % self.info
+        print 'Peer %s:%d disconnected' % self.info
         self.my_socket.close()
         # later we can change this to 'disconnected'
+        self.connection_state = 'disconnected'
+        self.reset_vars()
+        return
+
+    # A peer failed if they have more than the max number of errors
+    # Kill the thread
+    def failed(self):
+        print 'Peer %s:%d failed' % self.info
+        self.my_socket.close()
         self.connection_state = 'failed'
+        self.reset_vars()
+        return
+
+    # A peer has done all the work it can find. 
+    # We want to keep these peers in case we have more
+    # work for them to do for some reason
+    def done(self):
+        print 'Peer %s:%d done' % self.info
+        self.my_socket.close()
+        self.connection_state = 'done'
+        self.reset_vars()
+        return
+
+    def reset_vars(self):
+        self.num_errors = 0
+        self.choking = True
+        self.interested = False
+        self.peer_choking = True
+        self.peer_interested = False
+        self.handshake_done = False
+        self.read_buf = ''
+        self.write_buf = ''
 
     def check_errors(self):
         if self.num_errors > self.max_errors:
-            print 'Peer %s:%d had more than three errors' % self.info
-            self.disconnect()
+            print 'Peer %s:%d exceeded max errors' % self.info
+            self.failed()
             return True
         return False
 
@@ -354,7 +383,7 @@ class Peer(threading.Thread):
 #
 
     # The peer is choking you
-    def recv_choke_msg(self):
+    def recv_choke_msg(self, data, pack_str):
         print 'Choke Message from %s:%d' % self.info
         self.peer_choking = True
 

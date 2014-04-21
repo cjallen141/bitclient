@@ -17,20 +17,20 @@ def main():
     # file1 is a single-file torrent
     # file2 is a multi-file torrent
     #file1 = '../referenceFiles/TestTorrent.torrent'
-    #file2 = '../referenceFiles/WhySoccerMatters-Original.torrent'
-    #file3 = 'ThisIsNotARealFile.torrent'
-    file4 = '/Users/brent/Downloads/ubuntu-13.10-desktop-amd64.iso.torrent'
-    #file5 = '/Users/brent/Downloads/t-rice.jpg.torrent'
-    #file6 = '/Users/brent/Downloads/ProGit.pdf.torrent'
+    #file1 = '../referenceFiles/WhySoccerMatters-Original.torrent'
+    #file1 = 'ThisIsNotARealFile.torrent'
+    #file1 = '/Users/brent/Downloads/ubuntu-13.10-desktop-amd64.iso.torrent'
+    #file1 = '/Users/brent/Downloads/t-rice.jpg.torrent'
+    file1 = '/Users/brent/Downloads/ProGit.pdf.torrent'
 
     data['write_file'] = './ubuntu-13.10-desktop-amd64.iso'
-    data['torrent_file'] = file4
+    data['torrent_file'] = file1
     data['peer_id'] = 'ThisIsATestOfGTENS00'
     data['key'] = '50EDCACE'
     data['port'] = 61130
     data['compact'] = 1
     data['no_peer_id'] = 1
-    data['max_connections'] = 1
+    data['max_connections'] = 5
     data['state'] = 'started'
     data['numwant'] = 5
 
@@ -91,7 +91,7 @@ def main():
     PieceM.track_mgr = TrackM
     PieceM.peer_mgr = PeerM
 
-    PeerM.run()
+    PeerM.start()
 
 if __name__ == "__main__":
     main()

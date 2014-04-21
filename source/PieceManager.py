@@ -54,8 +54,28 @@ class PieceManager:
        # f=open(file_info['file_name'],'a+')
     # Methods
     def is_finished_downloading(self):
+        # Go through the downloaded_piece_q and verify
+        while not self.downloaded_piece_q.empty():
+            cur_piece = self.downloaded_piece_q.get()
+            # Testing stuff
+            # data = []
+            # for block in cur_piece.blocks:
+            #     data.extend(block.data)
+            # data = ''.join(data)
+            # new_hash = Decoder.create_hash(data)
+            # Decoder.print_escaped_hex(new_hash, True)
+            # Decoder.print_escaped_hex(cur_piece.hash, True)
+            # print new_hash == cur_piece.hash
+
+            if not cur_piece.verify():
+                print 'Piece %d Not Verified' % cur_piece.idx
+                cur_piece.clean()
+                self.desired_piece_q.put(cur_piece)
+            else:
+                print 'Piece %d Verified' % cur_piece.idx
+
         for piece in self.piece_list:
-            if piece.verified == False:
+            if not piece.verified:
                 return False
 
         return True
@@ -221,23 +241,26 @@ class Piece:
         self.downloaded = ans
         return ans 
 
-
     def verify(self):
-        #
-        #attempts to verify the piece against its hash value. returns boolean of result
-        #will also set the verified to 1 
 
-        #check all the blocks if they have been downloaded. Once they are all downloaded 
+        #attempts to verify the piece against
+        #its hash value. returns boolean of result
+        #will also set the verified to 1
+        #check all the blocks if they have been
+        #downloaded. Once they are all downloaded
+
         if not self.downloaded:
             self.verified = False
             return False
-            
+
         #check against SHA1 hash.
         hash_of_data = Decoder.create_hash(self.extract_data())
-        print "checking piece, data: " + str(self.extract_data())
-        print "size: " + str(len(self.extract_data()))
-        print "hash : " + str(hash_of_data)
-        print "hash in list: " + str(self.hash)
+        #Decoder.print_escaped_hex(hash_of_data, True)
+        #Decoder.print_escaped_hex(self.hash, True)
+        # print "checking piece, data: " + str(self.extract_data())
+        # print "size: " + str(len(self.extract_data()))
+        # print "hash : " + str(hash_of_data)
+        # print "hash in list: " + str(self.hash)
         if hash_of_data == self.hash:
             self.verified = True
             return True
