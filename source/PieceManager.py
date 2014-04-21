@@ -140,6 +140,7 @@ class PieceManager:
         for i in range(0, len(peer_bitfield)):
             if (peer_bitfield[i] and not self.piece_list[i].verified):
                 return True
+        return False
 
     def print_progress(self):
         #print the current progress of the file. This will be helpful for debugging and using the 

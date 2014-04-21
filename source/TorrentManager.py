@@ -3,6 +3,8 @@ from Decoder import *
 from TrackerManager import TrackerManager
 from peermanager import PeerManager
 from PieceManager import PieceManager
+import time
+import threading
 
 
 def main():
@@ -91,7 +93,15 @@ def main():
     PieceM.track_mgr = TrackM
     PieceM.peer_mgr = PeerM
 
+    # Once this Peer Manager is spawned, this MainThread will stop
+    # Calling 'print threading.enumerate() will output this:'
+    # [<_MainThread(MainThread, stopped 140735224099600)>
+    #  , <PeerManager(Thread-1, started 4568743936)>]
     PeerM.start()
+
+    for i in range(0, 300):
+        time.sleep(.05)
+        print threading.enumerate()
 
 if __name__ == "__main__":
     main()

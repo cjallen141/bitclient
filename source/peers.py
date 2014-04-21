@@ -46,20 +46,21 @@ class Peer(threading.Thread):
         self.keep_alive_max = 50000000
         self.recv_size = 100000
         self.write_size = 100000
-        self.max_timeout = 10
+        self.max_timeout = 2
         self.can_receive = True
         self.cur_piece = ''
         self.block_size = 2 ** 14
 
         # state can be
-        # init: just getting started
-        # disconnected: all peers are init to this
+        # init: peer manager checks this state when it tries to start
+        #       new peers and will start the peer if it is in 'init'
         # connected: peers can connect
         # failed: peers tried to connect and failed
         #         or something went wrong and it is
         #         not doing work anymore
+        # error: if the peer has too many errors then it errors out
         # done: peer is done with work for now
-        self.connection_state = 'disconnected'
+        self.connection_state = 'init'
         self.choking = True
         self.interested = False
         self.peer_choking = True
@@ -70,16 +71,22 @@ class Peer(threading.Thread):
         self.info = (self.ip_address, self.port_number)
 
     def run(self):  # starts the peer thread
-        while (self.connection_state == 'init'):
+        self.connection_state = 'disconnected'
+
+        while (self.connection_state == 'disconnected'):
             # Check if we exceed the errors
             if self.check_errors() is True:
                 break
             self.connect()
 
-        print ''
-
         # Change it so that the peer manager tells the peer when to be done
-        while (self.connection_state == 'connected'):
+        done = False
+        while (not done):
+
+            # Ask the Piece Manager if we are done
+            if self.piece_mgr.is_finished_downloading():
+                self.done()
+                done = True
 
             # Check if we exceeded the errors
             if self.check_errors() is True:
@@ -305,8 +312,6 @@ class Peer(threading.Thread):
         return
 
     # A peer has done all the work it can find. 
-    # We want to keep these peers in case we have more
-    # work for them to do for some reason
     def done(self):
         print 'Peer %s:%d done' % self.info
         self.my_socket.close()

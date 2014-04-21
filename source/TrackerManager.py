@@ -97,6 +97,7 @@ class TrackerManager:
                 # to divide by 12 because now one hex digit = one character
 
                 num_peers = len(ascii_peer_data)/12
+
                 print ''
 
                 # Send it off to Peer Manager to fix
