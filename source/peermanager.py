@@ -9,7 +9,9 @@
 import threading
 from peers import Peer
 from time import sleep
+import sys
 
+testing = False
 
 class PeerManager(threading.Thread):
     # attributes:
@@ -91,7 +93,7 @@ class PeerManager(threading.Thread):
         #     peer_port = int(peer_hex_id[8:12], 16)
         #     self.spawn_peer(peer_ip, peer_port)
 
-        print ''
+        if testing: print ''
 
     def run(self):
         # enters thread
@@ -111,7 +113,7 @@ class PeerManager(threading.Thread):
             # Ask the Piece Manager if we are done
             if self.piece_mgr.is_finished_downloading():
                 done = True
-                print 'We are done here'
+                if testing: print 'We are done here'
             # else:
             #     print 'We are not done here'
 
@@ -119,7 +121,7 @@ class PeerManager(threading.Thread):
             for peer in self.peers:
                 if peer.connection_state == 'failed':
                     self.num_running -= 1
-                    print 'Peer %s:%d failed' % \
+                    if testing: print 'Peer %s:%d failed' % \
                           (peer.ip_address, peer.port_number)
                     self.peers.remove(peer)
 
@@ -136,7 +138,7 @@ class PeerManager(threading.Thread):
                 # to the ones we can connect to but, only update the peer
                 # list every hundreds of loops (minutes)
                 if self.not_enough_peers:
-                    print 'Warning: Not Enough Peers for Max Connections'
+                    if testing: print 'Warning: Not Enough Peers for Max Connections'
                     peers_to_add = len(self.peers) - self.num_running
                 else:
                     peers_to_add = self.max_connections - self.num_running
@@ -144,7 +146,7 @@ class PeerManager(threading.Thread):
                 if peers_to_add == 0:
                     pass
                 else:
-                    print 'Trying to connect to %d peer(s)' % peers_to_add
+                    if testing: print 'Trying to connect to %d peer(s)' % peers_to_add
                     for peer in self.peers:
                         if peers_to_add == 0:
                             break
@@ -153,14 +155,22 @@ class PeerManager(threading.Thread):
                                 peer.start()
                                 self.num_running += 1
                                 peers_to_add -= 1
-                                print 'Starting peer %s:%d' % peer.info
+                                if testing: print 'Starting peer %s:%d' % peer.info
+
+                            
                     if peers_to_add != 0:
                         if self.not_enough_peers_count > 10000:
                             self.update_peer_list()
                             self.not_enough_peers_count = 0
                         else:
                             self.not_enough_peers_count += 1
-                    print ''
+                    if testing: print ''
+            if not testing:######printing
+                out = self.piece_mgr.get_print_progress()
+                sys.stdout.write(out)
+                sys.stdout.flush()
+                #sys.stdout.flush()
+                #print out
             sleep(0.01)
 
         print self.peers
@@ -193,3 +203,13 @@ class PeerManager(threading.Thread):
     def print_peer_list(self):
         for peer in self.peers:
             print peer.ip_address, peer.my_state, peer.peer_state
+
+    def print_downloading_status(self):
+        pass
+        #print out the current status. TO use during active download
+        #format
+        #
+        #   Active Peers: num_of_peers
+        #       Progress: (percent%)====================>
+
+
