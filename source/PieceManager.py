@@ -327,15 +327,18 @@ if __name__ == '__main__':
     #intentionally making it not even divisible
 
     #####generate file
-    file_content = 'thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_five0'
+    file_name = 'datapath.png'
+    f = open("../../datapath.png")
+    file_content = f.read()
+    #file_content = 'thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_five0'
     print 'file length (bytes): ' + str(len(file_content))
     file_length = len(file_content)
-    pSize = 15
+    pSize = 100
     BlOCK_SIZE = 4
     #create file data
     file_data = {}
     file_data['multi_file'] = False
-    file_data['file_name'] = 'file.txt'
+    file_data['file_name'] = file_name
     file_data['length']  = len(file_content)
     file_data['piece_length'] = pSize
 
