@@ -67,7 +67,7 @@ class PeerManager(threading.Thread):
             self.not_enough_peers = False
 
         peer_ip = '127.000.000.001'
-        peer_port = 61137
+        peer_port = 42031
         if not self.peers:
             self.spawn_peer(peer_ip, peer_port)
         else:
@@ -166,11 +166,7 @@ class PeerManager(threading.Thread):
                             self.not_enough_peers_count += 1
                     if testing: print ''
             if not testing:######printing
-                out = self.piece_mgr.get_print_progress()
-                sys.stdout.write(out)
-                sys.stdout.flush()
-                #sys.stdout.flush()
-                #print out
+                self.print_downloading_status()
             sleep(0.01)
 
         print self.peers
@@ -205,7 +201,31 @@ class PeerManager(threading.Thread):
             print peer.ip_address, peer.my_state, peer.peer_state
 
     def print_downloading_status(self):
-        pass
+        out = [] 
+        out.extend('|Peers,')
+        p_init = 0 
+        p_con = 0
+        p_total = 0
+        p_dis = 0
+        p_fail = 0
+        for peer in self.peers:
+            p_total += 1
+            if peer.connection_state == 'init':
+                p_init += 1
+            if peer.connection_state == 'connected':
+                p_con += 1
+            if peer.connection_state == 'disconnected':
+                p_dis +=1
+            if peer.connection_state == 'failed':
+                p_fail +=1
+        out.extend(' Con:'+str(p_con) + \
+            ' Dis:'+ str(p_dis) + ' Fail:' + str(p_fail)+ ' Total:' + str(p_total) + ' |')
+        piece_out = self.piece_mgr.get_print_progress()
+        out.extend(piece_out)
+        sys.stdout.write(''.join(out))
+        sys.stdout.flush()
+        #sys.stdout.flush()
+        #print out
         #print out the current status. TO use during active download
         #format
         #

@@ -152,7 +152,7 @@ class PieceManager:
                     count += 1
 
             out = []
-            out.append('Download Pieces: ')
+            out.append('Progress: ')
             out.append(str(count))
             out.append(': ')
 
