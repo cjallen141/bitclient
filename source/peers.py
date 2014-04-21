@@ -87,6 +87,7 @@ class Peer(threading.Thread):
             if self.piece_mgr.is_finished_downloading():
                 self.done()
                 done = True
+                continue
 
             # Check if we exceeded the errors
             if self.check_errors() is True:

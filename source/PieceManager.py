@@ -164,6 +164,7 @@ class PieceManager:
         #4/21: ONLY CALL THIS WHEN COMPLETELY READY TO WRITE OUT THE FILE!
         try:
             fhandle = open(self.file_name, 'w')
+            print 'writing out to file...',
 
         except IOError:
             print "Something went wrong opening the file "
@@ -173,6 +174,10 @@ class PieceManager:
             out = piece.extract_data()
 
             fhandle.write(out)
+
+        fhandle.close()
+
+        print 'finished'
 
 ###############################################################
 

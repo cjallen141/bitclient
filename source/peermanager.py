@@ -110,9 +110,6 @@ class PeerManager(threading.Thread):
 
             # Ask the Piece Manager if we are done
             if self.piece_mgr.is_finished_downloading():
-                for peer in self.peers:
-                    if threading.isalive(peer):
-                        sleep(2)
                 done = True
                 print 'We are done here'
             # else:
@@ -169,6 +166,10 @@ class PeerManager(threading.Thread):
         print self.peers
         print 'File is done downloading'
         print 'Peer Manager Finished'
+
+        print 'Writing out to file'
+        self.piece_mgr.write_out_to_file()
+
         return
 
     def close_peers(self):

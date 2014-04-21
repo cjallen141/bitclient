@@ -99,9 +99,5 @@ def main():
     #  , <PeerManager(Thread-1, started 4568743936)>]
     PeerM.start()
 
-    for i in range(0, 300):
-        time.sleep(.05)
-        print threading.enumerate()
-
 if __name__ == "__main__":
     main()
