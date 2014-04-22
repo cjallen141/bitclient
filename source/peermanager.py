@@ -173,8 +173,6 @@ class PeerManager(threading.Thread):
                     else:
                         # Go through all of the peers
                         for failed in self.failed:
-                            print failed
-                            print type(failed)
                             # If this peer matches any failed peers
                             # Increment it's counter
                             if (peer.ip_address == failed[0] and

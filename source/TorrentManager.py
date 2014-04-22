@@ -25,7 +25,7 @@ def main():
     #file1 = 'ThisIsNotARealFile.torrent'
     #file1 = '/Users/brent/Downloads/ubuntu-13.10-desktop-amd64.iso.torrent'
     #file1 = '/Users/brent/Downloads/t-rice.jpg.torrent'
-    file1 = '/Users/brent/Downloads/ProGit.pdf.torrent'
+    file1 = '../referenceFiles/ProGit.pdf.torrent'
 
     data['write_file'] = './ubuntu-13.10-desktop-amd64.iso'
     data['torrent_file'] = file1

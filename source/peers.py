@@ -43,12 +43,12 @@ class Peer(threading.Thread):
         self.client_peer_id = client_peer_id
         self.num_errors = 0
         self.piece_mgr = piece_mgr
-        self.max_errors = 5
+        self.max_errors = 20
         self.keep_alive_count = 0
         self.keep_alive_max = 50000000
         self.recv_size = 100000
         self.write_size = 100000
-        self.max_timeout = 10
+        self.max_timeout = 5
         self.can_receive = True
         self.cur_piece = ''
         self.block_size = 2 ** 14
@@ -102,18 +102,23 @@ class Peer(threading.Thread):
 
             # Receive a message
             if self.can_receive:
+                if testing:
+                    print 'got into receive block'
                 try:
                     self.read_buf = self.my_socket.recv(self.recv_size)
+                    #print self.read_buf
                 except (socket.error, socket.timeout) as err:
                     self.num_errors += 1
-                    print 'Recv from %s:%d failed: %s' % \
-                        (self.ip_address, self.port_number, err)
+                    if testing:
+                        print 'Recv from %s:%d failed: %s' % \
+                            (self.ip_address, self.port_number, err)
+                    break
 
                 # Get the length of the message and then unpack
                 msg_length = four_bytes_to_int(self.read_buf[0:4])
 
                 # This is a keep-alive message, don't do anything
-                if msg_length == 0:
+                if msg_length <= 0:
                     continue
 
                 # Check to make sure we received the full message
@@ -127,13 +132,14 @@ class Peer(threading.Thread):
                         if testing:
                             print 'Recv from %s:%d failed: %s' % \
                                 (self.ip_address, self.port_number, err)
+                        break
 
                 # There might be multiple messages in the buffer
                 # Loop through them
-                while (len(self.read_buf) > 0):
+                while (len(self.read_buf) > 4):
                     msg_length = four_bytes_to_int(self.read_buf[0:4])
 
-                    if msg_length == 0:
+                    if msg_length <= 0:
                         continue
 
                     # It has a message id if we got this far
@@ -142,7 +148,15 @@ class Peer(threading.Thread):
                     msg_payload = self.read_buf[5:msg_length + 5 - 1]
 
                     # pack it into a data structure
+                    if testing:
+                        print msg_length
+                        print msg_id
+                        print_escaped_hex(msg_header, True)
+                        print_escaped_hex(msg_payload, True)
                     pack_str = '!ib5s%ds' % (msg_length - 1)
+
+                    if testing:
+                        print pack_str
                     message = pack(pack_str, msg_length, msg_id,
                                    msg_header, msg_payload)
 
@@ -176,6 +190,8 @@ class Peer(threading.Thread):
 
             # Are we choked, if not send a request
             if self.peer_choking is False:
+                if testing:
+                    print 'got into get piece block'
                 # Get a piece to request if we don't have one
                 if self.cur_piece == '':
                     self.get_new_desired_piece()
@@ -203,7 +219,11 @@ class Peer(threading.Thread):
             # function just adds to the write_buffer.
             try:
                 self.can_receive = False
+                if testing:
+                    print 'got into sending block'
                 if self.write_buf:
+                    # if testing:
+                    #     print 'got into write buf not empty'
                     self.my_socket.sendall(self.write_buf)
                     if testing:
                         print 'Sent message to %s:%d' % self.info
@@ -212,19 +232,25 @@ class Peer(threading.Thread):
                     # Sent something so receive the message
                     self.can_receive = True
                 else:
+                    # if testing:
+                    #     print 'got into write buf empty'
                     # Keep the connection alive
                     self.keep_alive_count += 1
                     if self.check_keep_alive():
                         # Create the keep alive message
-                        self.my_socket.sendall('')
-                        if testing:
-                            print 'Sent keep alive to %s:%d' % self.info
+                        try:
+                            self.my_socket.sendall('')
+                            if testing:
+                                print 'Sent keep alive to %s:%d' % self.info
+                        except (socket.error, socket.timeout) as err:
+                            self.num_errors += 1
             except (socket.error, socket.timeout) as err:
                 self.can_receive = False
                 self.num_errors += 1
                 if testing:
                     print 'Cannot send to %s:%d: %s' % \
                         (self.info[0], self.info[1], err)
+                continue
 
             #sleep(0.0001)
             if testing:
@@ -383,6 +409,7 @@ class Peer(threading.Thread):
             if not self.bit_field[candidate_piece.idx]:
                 # Put it back into the queue
                 self.piece_mgr.desired_piece_q.put(candidate_piece)
+                done = True
             else:
                 self.cur_piece = candidate_piece
                 done = True

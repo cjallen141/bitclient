@@ -4,6 +4,7 @@ import requests
 
 testing = False
 
+
 class TrackerManager:
     # Attributes
 
