@@ -9,6 +9,8 @@ import threading
 
 def main():
 
+    #use this to enable/disable all the other printing
+
     print 'Initializing Torrent Manager...',
 
     data = {}
@@ -23,7 +25,7 @@ def main():
     #file1 = 'ThisIsNotARealFile.torrent'
     #file1 = '/Users/brent/Downloads/ubuntu-13.10-desktop-amd64.iso.torrent'
     #file1 = '/Users/brent/Downloads/t-rice.jpg.torrent'
-    file1 = '/Users/brent/Downloads/ProGit.pdf.torrent'
+    file1 = '../../solutions.torrent'
 
     data['write_file'] = './ubuntu-13.10-desktop-amd64.iso'
     data['torrent_file'] = file1
@@ -101,4 +103,6 @@ def main():
     PeerM.start()
 
 if __name__ == "__main__":
+
+
     main()

@@ -6,6 +6,7 @@ from bitstring import BitArray
 import math 
 import struct
 
+testing = False
 
 PIECE_HASH_LENGTH = 20      #number of bytes per piece in the hash list
 #BLOCK_SIZE = 2**14
@@ -68,11 +69,11 @@ class PieceManager:
             # print new_hash == cur_piece.hash
 
             if not cur_piece.verify():
-                print 'Piece %d Not Verified' % cur_piece.idx
+                if testing: print 'Piece %d Not Verified' % cur_piece.idx
                 cur_piece.clean()
                 self.desired_piece_q.put(cur_piece)
             else:
-                print 'Piece %d Verified' % cur_piece.idx
+                if testing: print 'Piece %d Verified' % cur_piece.idx
 
         for piece in self.piece_list:
             if not piece.verified:
@@ -142,22 +143,37 @@ class PieceManager:
                 return True
         return False
 
-    def print_progress(self):
+    def get_print_progress(self):
         #print the current progress of the file. This will be helpful for debugging and using the 
         #program visually
-            out = list('\rDownloaded Pieces: |')
-            idx = len(out)
-            
-            x = range(0,self.num_of_pieces)
-            for i in x:
-                out.extend('_l')
+            count = 0
+            for piece in self.piece_list:
+                if piece.verified:
+                    count += 1
 
-            for piece in self.downloaded_piece_list:
+            out = []
+            out.append('Progress: ')
+            out.append(str(count))
+            out.append(': ')
 
-                offset = piece.idx
-                out[(idx)+offset*2] = '#'
-            sys.stdout.write("".join(out))
-            sys.stdout.flush()
+            done  = (float(count)/self.num_of_pieces)
+            blocks_done = int(done*20)
+            out.extend(['=']*blocks_done)
+            out.extend('>')
+            out.extend([' ']*(20-blocks_done-1))
+            out.extend(': (')
+            percent_done = done*100
+            out.extend(str(percent_done)+')')
+            #for i in x:
+            #    out.append('=')
+            #out.append('>')
+            #out.append(str(math.ceil(float(count)/self.num_of_pieces)))
+            #out.append('%')
+
+            out.append('\r')
+            return ''.join(out)
+            #sys.stdout.write("".join(out))
+            #sys.stdout.flush()
             #may want to move the actual printing to another function if want to format a bunch together
             #the output looks like this: 'Downloaded Pieces: |_|_|_|#|#|....' where the #'s are downloaded
     def write_out_to_file(self):
