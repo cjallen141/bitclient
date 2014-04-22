@@ -3,8 +3,8 @@ from Decoder import *
 from TrackerManager import TrackerManager
 from peermanager import PeerManager
 from PieceManager import PieceManager
-import time
-import threading
+#import time
+#import threading
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
     #file1 = 'ThisIsNotARealFile.torrent'
     #file1 = '/Users/brent/Downloads/ubuntu-13.10-desktop-amd64.iso.torrent'
     #file1 = '/Users/brent/Downloads/t-rice.jpg.torrent'
-    file1 = '../../solutions.torrent'
+    file1 = '/Users/brent/Downloads/ProGit.pdf.torrent'
 
     data['write_file'] = './ubuntu-13.10-desktop-amd64.iso'
     data['torrent_file'] = file1
@@ -35,9 +35,9 @@ def main():
     data['port'] = 61130
     data['compact'] = 1
     data['no_peer_id'] = 1
-    data['max_connections'] = 2
+    data['max_connections'] = 1
     data['state'] = 'started'
-    data['numwant'] = 200
+    data['numwant'] = 20
 
     # Next we decode it
     # decoded_data is the data from the torrent file.
@@ -103,6 +103,5 @@ def main():
     PeerM.start()
 
 if __name__ == "__main__":
-
 
     main()

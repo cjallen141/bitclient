@@ -7,6 +7,7 @@ from bitstring import BitArray
 
 testing = False
 
+
 class Peer(threading.Thread):
 # Attributes
 #   ipAddress - peer ip address
@@ -119,16 +120,13 @@ class Peer(threading.Thread):
                 while msg_length > len(self.read_buf):
                     try:
                         self.read_buf += self.my_socket.recv(self.recv_size)
-<<<<<<< HEAD
-                        print 'Recv from %s:%d success' % self.info
+                        if testing:
+                            print 'Recv from %s:%d success' % self.info
                     except (socket.error, socket.timeout) as err:
-=======
-                        if testing: print 'Recv from %s:%d success' % self.info
-                    except socket.error as err:
->>>>>>> 733cd6f2b0cb980987eeb1e54c729a7438d3d897
                         self.num_errors += 1
-                        if testing: print 'Recv from %s:%d failed: %s' % \
-                            (self.ip_address, self.port_number, err)
+                        if testing:
+                            print 'Recv from %s:%d failed: %s' % \
+                                (self.ip_address, self.port_number, err)
 
                 # There might be multiple messages in the buffer
                 # Loop through them
@@ -166,8 +164,9 @@ class Peer(threading.Thread):
                     # Make sure the message is a valid message
                     if (msg_id > 9 and msg_id < 0):
                         self.num_errors += 1
-                        if testing: print 'Invalid message from %s:%d: msg_id: %d' % \
-                              (self.ip_address, self.port_number, msg_id)
+                        if testing:
+                            print 'Invalid message from %s:%d: msg_id: %d' % \
+                                (self.ip_address, self.port_number, msg_id)
                     else:
                         handle_func = handles[msg_id]
 
@@ -189,8 +188,11 @@ class Peer(threading.Thread):
                         # All the blocks have been downloaded
                         self.cur_piece.is_downloaded()
                         self.piece_mgr.downloaded_piece_q.put(self.cur_piece)
-                        if testing: print 'Downloaded Piece %d from %s:%d' % \
-                              (self.cur_piece.idx, self.info[0], self.info[1])
+                        if testing:
+                            print 'Downloaded Piece %d from %s:%d' % \
+                                  (self.cur_piece.idx,
+                                   self.info[0],
+                                   self.info[1])
                         self.cur_piece = ''
                     else:
                         # Call the request function
@@ -203,7 +205,8 @@ class Peer(threading.Thread):
                 self.can_receive = False
                 if self.write_buf:
                     self.my_socket.sendall(self.write_buf)
-                    if testing: print 'Sent message to %s:%d' % self.info
+                    if testing:
+                        print 'Sent message to %s:%d' % self.info
                     self.write_buf = ''
 
                     # Sent something so receive the message
@@ -214,19 +217,18 @@ class Peer(threading.Thread):
                     if self.check_keep_alive():
                         # Create the keep alive message
                         self.my_socket.sendall('')
-<<<<<<< HEAD
-                        print 'Sent keep alive to %s:%d' % self.info
+                        if testing:
+                            print 'Sent keep alive to %s:%d' % self.info
             except (socket.error, socket.timeout) as err:
-=======
-                        if testing: print 'Sent keep alive to %s:%d' % self.info
-            except socket.error as err:
->>>>>>> 733cd6f2b0cb980987eeb1e54c729a7438d3d897
                 self.can_receive = False
                 self.num_errors += 1
-                if testing: print 'Cannot send to %s:%d: %s' % \
-                    (self.info[0], self.info[1], err)
+                if testing:
+                    print 'Cannot send to %s:%d: %s' % \
+                        (self.info[0], self.info[1], err)
 
-            if testing: print ''
+            #sleep(0.0001)
+            if testing:
+                print ''
 
         return
 
@@ -239,16 +241,14 @@ class Peer(threading.Thread):
             #self.info = ('127.111.11.11', 18720)
             self.my_socket.connect(self.info)
             self.connection_state = 'connected'
-<<<<<<< HEAD
-            print 'Connected to %s:%d' % self.info
+
+            if testing:
+                print 'Connected to %s:%d' % self.info
         except (socket.error, socket.timeout) as err:
-=======
-            if testing: print 'Connected to %s:%d' % self.info
-        except socket.error as err:
->>>>>>> 733cd6f2b0cb980987eeb1e54c729a7438d3d897
             self.num_errors += 1
-            if testing: print 'Cannot connect to %s:%d: %s' % \
-                  (self.info[0], self.info[1], err)
+            if testing:
+                print 'Cannot connect to %s:%d: %s' % \
+                    (self.info[0], self.info[1], err)
 
     def handshake(self):
         if self.connection_state == 'failed':
@@ -266,33 +266,31 @@ class Peer(threading.Thread):
             try:
                 self.my_socket.sendall(self.write_buf)
                 self.write_buf = ''
-<<<<<<< HEAD
-                print 'Sent Handshake to %s:%d' % self.info
+
+                if testing:
+                    print 'Sent Handshake to %s:%d' % self.info
             except (socket.error, socket.timeout) as err:
-=======
-                if testing: print 'Sent Handshake to %s:%d' % self.info
-            except socket.error as err:
->>>>>>> 733cd6f2b0cb980987eeb1e54c729a7438d3d897
                 self.num_errors += 1
-                if testing: print 'Send fail to %s:%d: %s' % \
-                      (self.info[0], self.info[1], err)
-                # self.disconnect()
+                if testing:
+                    print 'Send fail to %s:%d: %s' % \
+                        (self.info[0], self.info[1], err)
                 return
 
             # Try to receive
             # Same procedure
             try:
                 self.read_buf += self.my_socket.recv(68)
-                if testing: print 'Recv Handshake from: %s:%d' % self.info
-                # print 'Message Length: %d' % len(self.read_buf)
-                # print 'Message: ',
-                # Decoder.print_hex(self.read_buf)
+                if testing:
+                    print 'Recv Handshake from: %s:%d' % self.info
+                    # print 'Message Length: %d' % len(self.read_buf)
+                    # print 'Message: ',
+                    # Decoder.print_hex(self.read_buf)
             except (socket.error, socket.timeout) as err:
                 self.num_errors += 1
-                if testing: print 'Recv fail from %s:%d: %s' % \
-                      (self.info[0], self.info[1], err)
-                # self.disconnect()
-                return
+                if testing:
+                    print 'Recv fail from %s:%d: %s' % \
+                        (self.info[0], self.info[1], err)
+                    return
 
             # Now parse the handshake message
             if len(self.read_buf) > 0:
@@ -300,16 +298,19 @@ class Peer(threading.Thread):
                 msg = unpack('!8x20s20s', self.read_buf[20:68])
             else:
                 self.num_errors += 1
-                if testing: print 'Recv fail from %s:%d: Handshake Message Empty' % \
-                      (self.info[0], self.info[1])
+                if testing:
+                    print 'Recv fail from %s:%d: Handshake Message Empty' % \
+                        (self.info[0], self.info[1])
                 # self.disconnect()
                 return
 
             if msg[0] == self.info_hash:
-                if testing: print 'Handshake from %s:%d OK' % self.info
+                if testing:
+                    print 'Handshake from %s:%d OK' % self.info
                 self.handshake_done = True
             else:
-                if testing: print 'Handshake from %s:%d BAD' % self.info
+                if testing:
+                    print 'Handshake from %s:%d BAD' % self.info
                 self.disconnect()
                 return
 
@@ -322,7 +323,8 @@ class Peer(threading.Thread):
     # A peer has disconnected for some reason
     # Basically the same as failed now
     def disconnect(self):
-        if testing: print 'Peer %s:%d disconnected' % self.info
+        if testing:
+            print 'Peer %s:%d disconnected' % self.info
         self.my_socket.close()
         # later we can change this to 'disconnected'
         self.connection_state = 'disconnected'
@@ -332,15 +334,17 @@ class Peer(threading.Thread):
     # A peer failed if they have more than the max number of errors
     # Kill the thread
     def failed(self):
-        if testing: print 'Peer %s:%d failed' % self.info
+        if testing:
+            print 'Peer %s:%d failed' % self.info
         self.my_socket.close()
         self.connection_state = 'failed'
         self.reset_vars()
         return
 
-    # A peer has done all the work it can find. 
+    # A peer has done all the work it can find.
     def done(self):
-        if testing: print 'Peer %s:%d done' % self.info
+        if testing:
+            print 'Peer %s:%d done' % self.info
         self.my_socket.close()
         self.connection_state = 'done'
         self.reset_vars()
@@ -358,7 +362,8 @@ class Peer(threading.Thread):
 
     def check_errors(self):
         if self.num_errors > self.max_errors:
-            if testing: print 'Peer %s:%d exceeded max errors' % self.info
+            if testing:
+                print 'Peer %s:%d exceeded max errors' % self.info
             self.failed()
             return True
         return False
@@ -390,50 +395,35 @@ class Peer(threading.Thread):
         # If we get here then there are no blocks to download
         return ''
 
-    # def ready_to_save_blocks(self):
-    # this function is called to ask the peer
-    # if it has blocks in its queue ready to store into
-    # the main block storage.
-    #     return not self.download_block_q.empty()
-
-    # def add_block_to_queue(self, block):
-    #     self.download_block_q.put(block)
-
-    # def get_downloaded_blocks(self):
-    # returns all the objects currently in the download block queue
-    # returned as list in no particular order
-    #     x = []
-    #     while not self.download_block_q.empty():
-    #         x.append(self.download_block_q.get())
-
-    #     if self.download_block_q.empty():
-    #         print 'emptied peer queue'
-    #     return x
-
 #
 # Receiving Messages
 #
 
     # The peer is choking you
     def recv_choke_msg(self, data, pack_str):
-        if testing: print 'Choke Message from %s:%d' % self.info
+        if testing:
+            print 'Choke Message from %s:%d' % self.info
         self.peer_choking = True
 
     # The peer is unchoking you, can now make requests
     def recv_unchoke_msg(self, msg, msg_len):
-        if testing: print 'Unchoke Message from %s:%d' % self.info
+        if testing:
+            print 'Unchoke Message from %s:%d' % self.info
         self.peer_choking = False
 
     # The peer is interested in getting something from you
     def recv_interested_msg(self, msg, msg_len):
-        if testing: print 'Interested Message from %s:%d' % self.info
+        if testing:
+            print 'Interested Message from %s:%d' % self.info
 
     # The peer is not interested in getting anything from you
     def recv_uninterested_msg(self, msg, msg_len):
-        if testing: print 'Uninterested Message from %s:%d' % self.info
+        if testing:
+            print 'Uninterested Message from %s:%d' % self.info
 
     def recv_have_msg(self, data, pack_str):
-        if testing: print 'Have Message from %s:%d' % self.info
+        if testing:
+            print 'Have Message from %s:%d' % self.info
 
         # Unpack the structure
         msg = unpack(pack_str, data)
@@ -450,7 +440,8 @@ class Peer(threading.Thread):
         self.bitfield_analyze()
 
     def recv_bitfield_msg(self, data, pack_str):
-        if testing: print 'Bitfield Message from %s:%d' % self.info
+        if testing:
+            print 'Bitfield Message from %s:%d' % self.info
 
         # Unpack the structure
         msg = unpack(pack_str, data)
@@ -467,10 +458,12 @@ class Peer(threading.Thread):
         self.bitfield_analyze()
 
     def recv_request_msg(self, msg, msg_len):
-        if testing: print 'Request Message from %s:%d' % self.info
+        if testing:
+            print 'Request Message from %s:%d' % self.info
 
     def recv_piece_msg(self, data, pack_str):
-        if testing: print 'Piece Message from %s:%d' % self.info
+        if testing:
+            print 'Piece Message from %s:%d' % self.info
 
         # Unpack the structure
         msg = unpack(pack_str, data)
@@ -492,38 +485,47 @@ class Peer(threading.Thread):
         self.cur_block = ''
 
     def recv_cancel_msg(self, msg, msg_len):
-        if testing: print 'Cancel Message from %s:%d' % self.info
+        if testing:
+            print 'Cancel Message from %s:%d' % self.info
 
     def recv_port_msg(self, msg, msg_len):
-        if testing: print 'Port Message from %s:%d' % self.info
+        if testing:
+            print 'Port Message from %s:%d' % self.info
 
 #
 # Sending Messages
 #
 
     def send_choke_msg(self, msg, msg_len):
-        if testing: print 'Choke Message to %s:%d' % self.info
+        if testing:
+            print 'Choke Message to %s:%d' % self.info
 
     def send_unchoke_msg(self, msg, msg_len):
-        if testing: print 'Unchoke Message to %s:%d' % self.info
+        if testing:
+            print 'Unchoke Message to %s:%d' % self.info
 
     def send_interested_msg(self):
-        if testing: print 'Interested Message to %s:%d' % self.info
+        if testing:
+            print 'Interested Message to %s:%d' % self.info
         msg = pack('!ib', 1, 2)
 
         self.write_buf = self.write_buf + msg
 
     def send_unintersted_msg(self, msg, msg_len):
-        if testing: print 'Unintersted Message to %s:%d' % self.info
+        if testing:
+            print 'Unintersted Message to %s:%d' % self.info
 
     def send_have_msg(self, msg, msg_len):
-        if testing: print 'Have Message to %s:%d' % self.info
+        if testing:
+            print 'Have Message to %s:%d' % self.info
 
     def send_bitfield_msg(self, msg, msg_len):
-        if testing: print 'Bitfield Message to %s:%d' % self.info
+        if testing:
+            print 'Bitfield Message to %s:%d' % self.info
 
     def send_request_msg(self, block):
-        if testing: print 'Request Message to %s:%d' % self.info
+        if testing:
+            print 'Request Message to %s:%d' % self.info
         # Create the packet
         pack_str = '!ibiii'
         msg = pack(pack_str, 13, 6, self.cur_piece.idx,
@@ -531,13 +533,16 @@ class Peer(threading.Thread):
         self.write_buf = self.write_buf + msg
 
     def send_piece_msg(self, msg, msg_len):
-        if testing: print 'Piece Message to %s:%d' % self.info
+        if testing:
+            print 'Piece Message to %s:%d' % self.info
 
     def send_cancel_msg(self, msg, msg_len):
-        if testing: print 'Cancel Message to %s:%d' % self.info
+        if testing:
+            print 'Cancel Message to %s:%d' % self.info
 
     def send_port_msg(self, msg, msg_len):
-        if testing: print 'Port Message to %s:%d' % self.info
+        if testing:
+            print 'Port Message to %s:%d' % self.info
 
 #
 # Below are all the function that the messages use

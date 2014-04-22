@@ -2,6 +2,7 @@
 from Decoder import *
 import requests
 
+testing = False
 
 class TrackerManager:
     # Attributes
@@ -21,7 +22,8 @@ class TrackerManager:
                            numwant):
 
         if 'http://' in self.announce_url:
-            print 'Sending GET Request to Tracker'
+            if testing:
+                print 'Sending GET Request to Tracker'
             # Populate the parameters for the URL
             params = {'info_hash': str(info_hash),
                       'peer_id': peer_id,
@@ -44,22 +46,27 @@ class TrackerManager:
 
             # Check to see if we get good data back
             if response.status_code > 400:
-                print 'Failed to Connect to Tracker'
-                print 'Status Code: %s' % response.status_code
-                print 'Reason: %s' % response.reason
+                if testing:
+                    print 'Failed to Connect to Tracker'
+                    print 'Status Code: %s' % response.status_code
+                    print 'Reason: %s' % response.reason
                 ret_val = 0
             elif 'peers' not in response.content:
-                print 'Failed to Connect to Tracker'
-                print 'Incorrect URL Parameters'
+                if testing:
+                    print 'Failed to Connect to Tracker'
+                    print 'Incorrect URL Parameters'
                 ret_val = 0
             else:
-                print 'Received GET Response from Tracker'
+                if testing:
+                    print 'Received GET Response from Tracker'
                 result = bdecode_data(response.content)
                 ret_val = result
-                print 'Received Peer Candidate List'
+                if testing:
+                    print 'Received Peer Candidate List'
             return ret_val
         else:
-            print 'Tracker must be a GET tracker'
+            if testing:
+                print 'Tracker must be a GET tracker'
             ret_val = 0
             return ret_val
 
@@ -97,7 +104,8 @@ class TrackerManager:
 
                 num_peers = len(ascii_peer_data)/12
 
-                print ''
+                if testing:
+                    print ''
 
                 # Send it off to Peer Manager to fix
                 return [num_peers, ascii_peer_data]
