@@ -5,7 +5,7 @@ import threading
 from time import sleep
 from bitstring import BitArray
 
-testing = False
+testing = True
 
 
 class Peer(threading.Thread):
@@ -36,6 +36,7 @@ class Peer(threading.Thread):
     def __init__(self, ipAddress, portNumber,
                  info_hash, client_peer_id, piece_mgr):
         threading.Thread.__init__(self)
+        self.daemon = True
         self.ip_address = ipAddress
         self.port_number = portNumber
         self.my_socket = ''
@@ -93,7 +94,8 @@ class Peer(threading.Thread):
 
             # Check if we exceeded the errors
             if self.check_errors() is True:
-                self.connection_state = 'failed'
+                done = True
+                continue
 
             # Do a handshake if we need to
             if self.handshake_done is False:
@@ -101,12 +103,12 @@ class Peer(threading.Thread):
                 continue
 
             # Receive a message
-            if self.can_receive:
+            if self.can_receive and not done:
                 if testing:
                     print 'got into receive block'
                 try:
                     self.read_buf = self.my_socket.recv(self.recv_size)
-                    #print self.read_buf
+                    # print self.read_buf
                 except (socket.error, socket.timeout) as err:
                     self.num_errors += 1
                     if testing:
@@ -152,7 +154,7 @@ class Peer(threading.Thread):
                         print msg_length
                         print msg_id
                         print_escaped_hex(msg_header, True)
-                        print_escaped_hex(msg_payload, True)
+                        #print_escaped_hex(msg_payload, True)
                     pack_str = '!ib5s%ds' % (msg_length - 1)
 
                     if testing:
@@ -184,35 +186,52 @@ class Peer(threading.Thread):
                     else:
                         handle_func = handles[msg_id]
 
-                    handle_func(message, pack_str)
+                    if not handle_func(message, pack_str):
+                        done = True
+                        #self.write_buf = ''
+                        break
 
                     self.read_buf = self.read_buf[4 + msg_length:]
+                    # If they send an empty bitfield then we are screwed#####################
+            # if done:
+            #     print 'got in done'
+            #     continue
 
             # Are we choked, if not send a request
-            if self.peer_choking is False:
-                if testing:
-                    print 'got into get piece block'
-                # Get a piece to request if we don't have one
-                if self.cur_piece == '':
-                    self.get_new_desired_piece()
+            if not done:
+                if self.peer_choking is False:
+                    if testing:
+                        print 'got into get piece block'
+                    # Get a piece to request if we don't have one
                     if self.cur_piece == '':
-                        self.done()
-                else:
-                    # Get a block to request
-                    self.cur_block = self.get_new_desired_block()
-                    if self.cur_block == '':
-                        # All the blocks have been downloaded
-                        self.cur_piece.is_downloaded()
-                        self.piece_mgr.downloaded_piece_q.put(self.cur_piece)
-                        if testing:
-                            print 'Downloaded Piece %d from %s:%d' % \
-                                  (self.cur_piece.idx,
-                                   self.info[0],
-                                   self.info[1])
-                        self.cur_piece = ''
+                        self.get_new_desired_piece()
+                        if self.cur_piece == '':
+                            self.done()
                     else:
-                        # Call the request function
-                        self.send_request_msg(self.cur_block)
+                        # Get a block to request
+                        self.cur_block = self.get_new_desired_block()
+                        if self.cur_block == '':
+                            # All the blocks have been downloaded
+                            self.cur_piece.is_downloaded()
+                            self.piece_mgr.downloaded_piece_q.put(
+                                self.cur_piece)
+
+                            if testing:
+                                print 'Downloaded Piece %d from %s:%d' % \
+                                      (self.cur_piece.idx,
+                                       self.info[0],
+                                       self.info[1])
+                            self.cur_piece = ''
+                        else:
+                            # Call the request function
+                            self.send_request_msg(self.cur_block)
+                else:
+                    # Wait a little while and then send an interested message
+                    sleep(1)
+                    self.interested = False
+                    if not self.bitfield_analyze():
+                        self.done()
+                        break
 
             # Send a message
             # This can hold multiple messages, because each send
@@ -244,6 +263,8 @@ class Peer(threading.Thread):
                                 print 'Sent keep alive to %s:%d' % self.info
                         except (socket.error, socket.timeout) as err:
                             self.num_errors += 1
+                if testing:
+                    print 'got out of sending block'
             except (socket.error, socket.timeout) as err:
                 self.can_receive = False
                 self.num_errors += 1
@@ -252,10 +273,11 @@ class Peer(threading.Thread):
                         (self.info[0], self.info[1], err)
                 continue
 
-            #sleep(0.0001)
+            # sleep(0.0001)
             if testing:
                 print ''
 
+        print 'got out of loop'
         return
 
     def connect(self):
@@ -431,22 +453,26 @@ class Peer(threading.Thread):
         if testing:
             print 'Choke Message from %s:%d' % self.info
         self.peer_choking = True
+        return True
 
     # The peer is unchoking you, can now make requests
     def recv_unchoke_msg(self, msg, msg_len):
         if testing:
             print 'Unchoke Message from %s:%d' % self.info
         self.peer_choking = False
+        return True
 
     # The peer is interested in getting something from you
     def recv_interested_msg(self, msg, msg_len):
         if testing:
             print 'Interested Message from %s:%d' % self.info
+        return True
 
     # The peer is not interested in getting anything from you
     def recv_uninterested_msg(self, msg, msg_len):
         if testing:
             print 'Uninterested Message from %s:%d' % self.info
+        return True
 
     def recv_have_msg(self, data, pack_str):
         if testing:
@@ -464,7 +490,10 @@ class Peer(threading.Thread):
         self.bit_field[four_bytes_to_int(msg[3])] = True
 
         # Call bit_field_analyze
-        self.bitfield_analyze()
+        if not self.bitfield_analyze():
+            self.done()
+            return False
+        return True
 
     def recv_bitfield_msg(self, data, pack_str):
         if testing:
@@ -482,11 +511,15 @@ class Peer(threading.Thread):
         self.bit_field = BitArray(bytes=msg[3])
 
         # Call bit_field_analyze
-        self.bitfield_analyze()
+        if not self.bitfield_analyze():
+            self.done()
+            return False
+        return True
 
     def recv_request_msg(self, msg, msg_len):
         if testing:
             print 'Request Message from %s:%d' % self.info
+        return True
 
     def recv_piece_msg(self, data, pack_str):
         if testing:
@@ -495,7 +528,7 @@ class Peer(threading.Thread):
         # Unpack the structure
         msg = unpack(pack_str, data)
         # Take out the piece offset and block offset
-        pack_str = '!2i%ds' % (len(msg[3])-8)
+        pack_str = '!2i%ds' % (len(msg[3]) - 8)
         payload = unpack(pack_str, msg[3])
         if testing:
             print 'length: %d' % msg[0]
@@ -510,14 +543,17 @@ class Peer(threading.Thread):
         self.cur_block.data = payload[2]
         self.cur_block.downloaded = True
         self.cur_block = ''
+        return True
 
     def recv_cancel_msg(self, msg, msg_len):
         if testing:
             print 'Cancel Message from %s:%d' % self.info
+        return True
 
     def recv_port_msg(self, msg, msg_len):
         if testing:
             print 'Port Message from %s:%d' % self.info
+        return True
 
 #
 # Sending Messages
@@ -577,8 +613,14 @@ class Peer(threading.Thread):
 
     # Checks whether we need to send an intersted message
     def bitfield_analyze(self):
+        print 'analyzing bitfield'
         if self.interested is False:
             # Ask the piece manager whether we need to be intersted
             self.interested = self.piece_mgr.is_interested(self.bit_field)
             if self.interested is True:
                 self.send_interested_msg()
+                print 'interested'
+                return True
+            return False
+        print 'not interested'
+        return True

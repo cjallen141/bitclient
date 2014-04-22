@@ -2,7 +2,7 @@
 from Decoder import *
 import requests
 
-testing = False
+testing = True
 
 
 class TrackerManager:
@@ -42,7 +42,7 @@ class TrackerManager:
 
             # Send the HTTP GET
             response = requests.get(self.announce_url, params=params)
-            #print response.url
+            print response.url
             #print response.content
 
             # Check to see if we get good data back
@@ -75,7 +75,7 @@ class TrackerManager:
         # Connect to the tracker
         peer_data = self.connect_to_tracker(self.data['info_hash'],
                                             self.data['peer_id'],
-                                            self.data['length'],
+                                            self.data['file_length'],
                                             self.data['state'],
                                             self.data['port'],
                                             self.data['compact'],
