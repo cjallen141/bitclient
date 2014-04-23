@@ -37,7 +37,7 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, 'spmf:', ['--help'])
     except getopt.GetoptError as err:
-        print 'bitclient.py -i <torrentfile>'
+        print 'bitclient.py -f <torrentfile>'
         print 'Optional Arguments'
         print '\t-o for <outputpath>'
         print '\t-p for <port>'
@@ -57,7 +57,7 @@ def main(argv):
         elif opt == '-m':
             max_connections = arg
         else:
-            print 'bitclient.py -i <torrentfile>'
+            print 'bitclient.py -f <torrentfile>'
             print 'Optional Arguments'
             print '\t-o for <outputpath>'
             print '\t-p for <port>'
