@@ -44,7 +44,7 @@ class Peer(threading.Thread):
         self.client_peer_id = client_peer_id
         self.num_errors = 0
         self.piece_mgr = piece_mgr
-        self.max_errors = 20
+        self.max_errors = 2
         self.keep_alive_count = 0
         self.keep_alive_max = 50000000
         self.recv_size = 100000
@@ -88,12 +88,14 @@ class Peer(threading.Thread):
 
             # Ask the Piece Manager if we are done
             if self.piece_mgr.is_finished_downloading():
+                print 'got into finished'
                 self.done()
                 done = True
                 continue
 
             # Check if we exceeded the errors
             if self.check_errors() is True:
+                print 'got into check errors'
                 done = True
                 continue
 
@@ -116,6 +118,8 @@ class Peer(threading.Thread):
                             (self.ip_address, self.port_number, err)
                     break
 
+                print 'got past recieve 1'
+
                 # Get the length of the message and then unpack
                 msg_length = four_bytes_to_int(self.read_buf[0:4])
 
@@ -124,7 +128,11 @@ class Peer(threading.Thread):
                     continue
 
                 # Check to make sure we received the full message
+                count = 0
                 while msg_length > len(self.read_buf):
+                    count += 1
+                    if count > 15:
+                        break
                     try:
                         self.read_buf += self.my_socket.recv(self.recv_size)
                         if testing:
@@ -136,6 +144,8 @@ class Peer(threading.Thread):
                                 (self.ip_address, self.port_number, err)
                         break
 
+                print 'got past recieve two'
+
                 # There might be multiple messages in the buffer
                 # Loop through them
                 while (len(self.read_buf) > 4):
@@ -143,6 +153,8 @@ class Peer(threading.Thread):
 
                     if msg_length <= 0:
                         continue
+
+                    print 'got into parse message'
 
                     # It has a message id if we got this far
                     msg_id = ord(self.read_buf[4])
@@ -178,12 +190,13 @@ class Peer(threading.Thread):
 
                     # Now do something depending on the message id
                     # Make sure the message is a valid message
-                    if (msg_id > 9 and msg_id < 0):
+                    if (msg_id > 9 or msg_id < 0):
                         self.num_errors += 1
                         if testing:
                             print 'Invalid message from %s:%d: msg_id: %d' % \
                                 (self.ip_address, self.port_number, msg_id)
                     else:
+                        print 'going into handle'
                         handle_func = handles[msg_id]
 
                     if not handle_func(message, pack_str):
@@ -204,13 +217,16 @@ class Peer(threading.Thread):
                         print 'got into get piece block'
                     # Get a piece to request if we don't have one
                     if self.cur_piece == '':
+                        print 'got into cur_piece'
                         self.get_new_desired_piece()
                         if self.cur_piece == '':
                             self.done()
                     else:
+                        print 'got into not cur_piece'
                         # Get a block to request
                         self.cur_block = self.get_new_desired_block()
                         if self.cur_block == '':
+                            print 'got into request block'
                             # All the blocks have been downloaded
                             self.cur_piece.is_downloaded()
                             self.piece_mgr.downloaded_piece_q.put(
@@ -223,10 +239,12 @@ class Peer(threading.Thread):
                                        self.info[1])
                             self.cur_piece = ''
                         else:
+                            print 'send request for block'
                             # Call the request function
                             self.send_request_msg(self.cur_block)
                 else:
                     # Wait a little while and then send an interested message
+                    print 'got into sleep'
                     sleep(1)
                     self.interested = False
                     if not self.bitfield_analyze():
@@ -251,6 +269,9 @@ class Peer(threading.Thread):
                     # Sent something so receive the message
                     self.can_receive = True
                 else:
+
+                    print 'got into write buf empty'
+
                     # if testing:
                     #     print 'got into write buf empty'
                     # Keep the connection alive
@@ -425,14 +446,17 @@ class Peer(threading.Thread):
         done = False
         while (not done):
             # Get a piece
+            print 'got into while'
             candidate_piece = self.piece_mgr.desired_piece_q.get()
 
             # Check the piece to see if the peer has it
             if not self.bit_field[candidate_piece.idx]:
+                print 'into first'
                 # Put it back into the queue
                 self.piece_mgr.desired_piece_q.put(candidate_piece)
                 done = True
             else:
+                print 'into second'
                 self.cur_piece = candidate_piece
                 done = True
 

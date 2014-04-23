@@ -169,6 +169,7 @@ class PeerManager(threading.Thread):
             # Go through and delete any failed ones
             for peer in self.peers:
                 if peer.connection_state == 'failed':
+                    print 'got into failed peer in peer manager'
                     self.num_running -= 1
 
                     # See if they are in the failed list already

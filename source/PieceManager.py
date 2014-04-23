@@ -92,9 +92,12 @@ class PieceManager:
                 if testing:
                     print 'Piece %d Verified' % cur_piece.idx
 
+        #print 'got after piece verified'
         for piece in self.piece_list:
             if not piece.verified:
                 return False
+
+        #print 'got to end of piece loop'
 
         return True
         # check if the file is completely downloaded
@@ -194,7 +197,8 @@ class PieceManager:
             return ''.join(out)
             # sys.stdout.write("".join(out))
             # sys.stdout.flush()
-            # may want to move the actual printing to another function if want to format a bunch together
+            # may want to move the actual printing to another 
+            # function if want to format a bunch together
             # the output looks like this: 'Downloaded Pieces: |_|_|_|#|#|....'
             # where the #'s are downloaded
 
@@ -226,6 +230,10 @@ class PieceManager:
                     out = out[length:]
         else:
             p = self.path + ''.join(self.file_name)
+
+            if not os.path.exists(os.path.dirname(p)):
+                os.makedirs(os.path.dirname(p))
+
             with open(p, 'w') as file_obj:
                 for piece in self.piece_list:
                     out = piece.extract_data()
