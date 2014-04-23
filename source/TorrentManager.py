@@ -29,7 +29,7 @@ def main(argv):
     file1 = 'bad'
     output_path = './'
     port = 61130
-    max_connections = 5
+    max_connections = 10
     udp_first = True
 
     #print argv
@@ -111,7 +111,7 @@ def main(argv):
         url = link[0]
         data['announce'].append(url)
 
-    print data['announce']
+    #print data['announce']
 
     # Check to see if it is a multi-file torrent or a single-file torrent
     # Multi File

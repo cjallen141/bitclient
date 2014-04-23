@@ -72,63 +72,63 @@ class PeerManager(threading.Thread):
         else:
             self.not_enough_peers = False
 
-        # # Only want to connect to myself
-        # peer_ip = '50.155.22.20'
-        # peer_port = 55223
-        # if not self.peers:
-        #     self.spawn_peer(peer_ip, peer_port)
-        # else:
-        #     if (self.peers[0].ip_address == peer_ip and
-        #        self.peers[0].port_number == peer_port):
-        #         pass
-        #     else:
-        #         self.spawn_peer(peer_ip, peer_port)
+        # Only want to connect to myself
+        peer_ip = '127.0.0.1'
+        peer_port = 61137
+        if not self.peers:
+            self.spawn_peer(peer_ip, peer_port)
+        else:
+            if (self.peers[0].ip_address == peer_ip and
+               self.peers[0].port_number == peer_port):
+                pass
+            else:
+                self.spawn_peer(peer_ip, peer_port)
 
-        # Prune the list
-        candidate_peers = []
+        # # Prune the list
+        # candidate_peers = []
 
-        for i in range(0, new_peers[0]):
-            # Assume that we add it
-            bool_add = True
+        # for i in range(0, new_peers[0]):
+        #     # Assume that we add it
+        #     bool_add = True
 
-            # Index into the hash
-            start = i * 12
-            end = (i + 1) * 12
+        #     # Index into the hash
+        #     start = i * 12
+        #     end = (i + 1) * 12
 
-            # The list is in big-endian so i'm not sure
-            # what corresponds to what. I'm just guessing.
-            peer_hex_id = new_peers[1][start:end]
-            peer_ip = "%i.%i.%i.%i" % \
-                (int(peer_hex_id[0:2], 16),
-                 int(peer_hex_id[2:4], 16),
-                 int(peer_hex_id[4:6], 16),
-                 int(peer_hex_id[6:8], 16))
-            peer_port = int(peer_hex_id[8:12], 16)
+        #     # The list is in big-endian so i'm not sure
+        #     # what corresponds to what. I'm just guessing.
+        #     peer_hex_id = new_peers[1][start:end]
+        #     peer_ip = "%i.%i.%i.%i" % \
+        #         (int(peer_hex_id[0:2], 16),
+        #          int(peer_hex_id[2:4], 16),
+        #          int(peer_hex_id[4:6], 16),
+        #          int(peer_hex_id[6:8], 16))
+        #     peer_port = int(peer_hex_id[8:12], 16)
 
-            # Check the peers list to see if it is in there
-            for peer in self.peers:
-                if (peer.ip_address == peer_ip and
-                   peer.port_number == peer_port):
-                    # Don't add it
-                    bool_add = False
+        #     # Check the peers list to see if it is in there
+        #     for peer in self.peers:
+        #         if (peer.ip_address == peer_ip and
+        #            peer.port_number == peer_port):
+        #             # Don't add it
+        #             bool_add = False
 
-            for peer in self.failed:
-                if (peer[0] == peer_ip and
-                   peer[1] == peer_port):
-                    # If it has failed more than three times
-                    if peer[2] >= self.max_fails:
-                        bool_add = False
+        #     for peer in self.failed:
+        #         if (peer[0] == peer_ip and
+        #            peer[1] == peer_port):
+        #             # If it has failed more than three times
+        #             if peer[2] >= self.max_fails:
+        #                 bool_add = False
 
-            if bool_add:
-                candidate_peers.append((peer_ip, peer_port))
+        #     if bool_add:
+        #         candidate_peers.append((peer_ip, peer_port))
 
-        for peer in candidate_peers:
-            self.spawn_peer(peer[0], peer[1])
+        # for peer in candidate_peers:
+        #     self.spawn_peer(peer[0], peer[1])
 
-        # If we can't find any peers and aren't connected to any then
-        # timeout for a little while
-        if not self.peers and not candidate_peers:
-            self.no_peers_online = True
+        # # If we can't find any peers and aren't connected to any then
+        # # timeout for a little while
+        # if not self.peers and not candidate_peers:
+        #     self.no_peers_online = True
 
         if testing:
             print ''
@@ -158,7 +158,7 @@ class PeerManager(threading.Thread):
             if self.no_peers_online:
                 self.no_peers_online_count += 1
                 if self.no_peers_online_count > self.max_no_peers:
-                    print 'No peers'
+                    #print 'No peers'
                     exit()
                 if testing:
                     print 'Can''t find any peers: Going to sleep'
@@ -166,40 +166,14 @@ class PeerManager(threading.Thread):
                 if testing:
                     print 'Looking for peers now'
 
-            # Go through and delete any failed ones
-            for peer in self.peers:
-                if peer.connection_state == 'failed':
-                    self.num_running -= 1
-
-                    # See if they are in the failed list already
-                    if not self.failed:
-                        self.failed.append([peer.ip_address,
-                                            peer.port_number, 1])
-                    else:
-                        # Go through all of the peers
-                        for failed in self.failed:
-                            # If this peer matches any failed peers
-                            # Increment it's counter
-                            if (peer.ip_address == failed[0] and
-                               peer.port_number == failed[1]):
-                                failed[2] += 1
-                                if testing:
-                                    print 'incremented'
-                                break
-                        # If we get through the whole loop and it's not there
-                        # then add it to the failed list
-                        self.failed.append([peer.ip_address,
-                                            peer.port_number, 1])
-                    # Then remove it from the list
-                    self.peers.remove(peer)
-
             # Now check if we need to update the list
             if not self.peers and not done:
                 # print 'in update loop'
                 self.update_peer_list()
 
             # This will connect to peers if we need to
-            if self.max_connections > self.num_running and not done:
+            if (self.max_connections > len(threading.enumerate())-1
+               and not done):
                 # print 'in connect loop'
 
                 # If we don't have enough peers to connect to then connect
@@ -218,8 +192,8 @@ class PeerManager(threading.Thread):
                             print 'Warning: Not Enough ' + \
                                 'Peers for Max Connections'
 
-                    if testing:
-                        print 'Trying to connect to %d peer(s)' % peers_to_add
+                    # if testing:
+                    #     print 'Trying to connect to %d peer(s)' % peers_to_add
 
                     for peer in self.peers:
                         if peers_to_add == 0:
@@ -239,8 +213,8 @@ class PeerManager(threading.Thread):
                             self.not_enough_peers_count = 0
                         else:
                             self.not_enough_peers_count += 1
-                    if testing:
-                        print ''
+                    # if testing:
+                    #     print ''
             if not testing:  # printing
                 self.print_downloading_status()
             sleep(0.001)

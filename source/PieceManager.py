@@ -91,8 +91,10 @@ class PieceManager:
             else:
                 if testing:
                     print 'Piece %d Verified' % cur_piece.idx
+                print 'got here'
 
         for piece in self.piece_list:
+            #print 'in loop'
             if not piece.verified:
                 return False
 
@@ -157,7 +159,7 @@ class PieceManager:
     # This determines whether we should be intersted in the peer
     def is_interested(self, peer_bitfield):
         # Go through the bitfield
-        print peer_bitfield.bin
+        #print peer_bitfield.bin
         for i in range(0, len(peer_bitfield)):
             if (peer_bitfield[i] and not self.piece_list[i].verified):
                 return True
@@ -200,7 +202,7 @@ class PieceManager:
 
     def write_out_to_file(self):
         # 4/21: ONLY CALL THIS WHEN COMPLETELY READY TO WRITE OUT THE FILE!
-        print 'got here'
+        #print 'got here'
 
         if self.multi_file:
             # Put all the data into one big variable
@@ -232,7 +234,7 @@ class PieceManager:
                     file_obj.write(out)
 
 
-        print 'finished'
+        #print 'finished'
 
 
 class Piece:
@@ -385,84 +387,84 @@ class Block:
 
 
 # testing############################################
-if __name__ == '__main__':
-    # testing#
-    # file will be 155 bytes long. Each piece will hold 10 bytes. Each block will be 2 bytes long.
-    # intentionally making it not even divisible
+# if __name__ == '__main__':
+#     # testing#
+#     # file will be 155 bytes long. Each piece will hold 10 bytes. Each block will be 2 bytes long.
+#     # intentionally making it not even divisible
 
-    # generate file
-    file_name = 'datapath.png'
-    f = open("../../datapath.png")
-    file_content = f.read()
-    #file_content = 'thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_five0'
-    print 'file length (bytes): ' + str(len(file_content))
-    file_length = len(file_content)
-    pSize = 100
-    BlOCK_SIZE = 4
-    # create file data
-    file_data = {}
-    file_data['multi_file'] = False
-    file_data['file_name'] = file_name
-    file_data['length'] = len(file_content)
-    file_data['piece_length'] = pSize
+#     # generate file
+#     file_name = 'datapath.png'
+#     f = open("../../datapath.png")
+#     file_content = f.read()
+#     #file_content = 'thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_thisisten_five0'
+#     #print 'file length (bytes): ' + str(len(file_content))
+#     file_length = len(file_content)
+#     pSize = 100
+#     BlOCK_SIZE = 4
+#     # create file data
+#     file_data = {}
+#     file_data['multi_file'] = False
+#     file_data['file_name'] = file_name
+#     file_data['length'] = len(file_content)
+#     file_data['piece_length'] = pSize
 
-    # create the hash_list
-    hash_list = []
-    x = 0
-    while(x < file_length):
-        hash_list.extend(Decoder.create_hash(file_content[x:x + pSize]))
+#     # create the hash_list
+#     hash_list = []
+#     x = 0
+#     while(x < file_length):
+#         hash_list.extend(Decoder.create_hash(file_content[x:x + pSize]))
 
-        x = x + pSize
-    hash_list = ''.join(hash_list)
-    file_data['pieces_hash'] = hash_list
-    #
+#         x = x + pSize
+#     hash_list = ''.join(hash_list)
+#     file_data['pieces_hash'] = hash_list
+#     #
 
-    num_of_pieces = int(math.ceil(float(file_length) / pSize))
-    print 'Number of pieces: ' + str(num_of_pieces)
+#     num_of_pieces = int(math.ceil(float(file_length) / pSize))
+#     #print 'Number of pieces: ' + str(num_of_pieces)
 
-    print 'length of hash_list (length*pSize): ' + str(len(hash_list))
+#     #print 'length of hash_list (length*pSize): ' + str(len(hash_list))
 
-    # now start up the PieceManager
-    pm = PieceManager(file_data)
-    print "starting Piecemanager...."
+#     # now start up the PieceManager
+#     pm = PieceManager(file_data)
+#     #print "starting Piecemanager...."
 
-    # checking generate_piece_list
-    # print "checking Piece list:"
-    # print "\tnumber of pieces in piece list: " + str(len(pm.piece_list))
-    # for piece in pm.piece_list:
-    #    print str(piece)
-    #    for block in piece.blocks:
-    #        print "\t" + str(block)
+#     # checking generate_piece_list
+#     # print "checking Piece list:"
+#     # print "\tnumber of pieces in piece list: " + str(len(pm.piece_list))
+#     # for piece in pm.piece_list:
+#     #    print str(piece)
+#     #    for block in piece.blocks:
+#     #        print "\t" + str(block)
 
-    # check generate desired piece q
-    pm.gen_desired_piece_q()
+#     # check generate desired piece q
+#     pm.gen_desired_piece_q()
 
-    assert (pm.is_finished_downloading() == False)
+#     assert (pm.is_finished_downloading() == False)
 
-    # simulate downloading all the blocks
-    index_into_file = 0
-    for piece in pm.piece_list:
-        for block in piece.blocks:
-            block.downloaded = True
-            block.data = file_content[
-                index_into_file:index_into_file + block.block_size]
-            index_into_file += block.block_size
-        # check the piece if downloaded
-        piece.is_downloaded()
-        pm.downloaded_piece_q.put(piece)
+#     # simulate downloading all the blocks
+#     index_into_file = 0
+#     for piece in pm.piece_list:
+#         for block in piece.blocks:
+#             block.downloaded = True
+#             block.data = file_content[
+#                 index_into_file:index_into_file + block.block_size]
+#             index_into_file += block.block_size
+#         # check the piece if downloaded
+#         piece.is_downloaded()
+#         pm.downloaded_piece_q.put(piece)
 
-    #
-    # check if downloaded
-    a = pm.is_finished_downloading()
+#     #
+#     # check if downloaded
+#     a = pm.is_finished_downloading()
 
-    for piece in pm.piece_list:
-        print piece
+#     for piece in pm.piece_list:
+#         #print piece
 
-    print "\n\n"
-    pm.is_finished_downloading()
-    for piece in pm.piece_list:
-        print piece
-    print "all downloaded!"
+#     #print "\n\n"
+#     pm.is_finished_downloading()
+#     for piece in pm.piece_list:
+#         print piece
+#     print "all downloaded!"
 
-    # test writing out to file
-    pm.write_out_to_file()
+#     # test writing out to file
+#     pm.write_out_to_file()

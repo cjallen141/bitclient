@@ -44,7 +44,7 @@ class Peer(threading.Thread):
         self.client_peer_id = client_peer_id
         self.num_errors = 0
         self.piece_mgr = piece_mgr
-        self.max_errors = 20
+        self.max_errors = 2
         self.keep_alive_count = 0
         self.keep_alive_max = 50000000
         self.recv_size = 100000
@@ -105,7 +105,8 @@ class Peer(threading.Thread):
             # Receive a message
             if self.can_receive and not done:
                 if testing:
-                    print 'got into receive block'
+                    pass
+                    # print 'got into receive block'
                 try:
                     self.read_buf = self.my_socket.recv(self.recv_size)
                     # print self.read_buf
@@ -124,7 +125,11 @@ class Peer(threading.Thread):
                     continue
 
                 # Check to make sure we received the full message
+                count = 0
                 while msg_length > len(self.read_buf):
+                    count += 1
+                    if count > 15:
+                        break
                     try:
                         self.read_buf += self.my_socket.recv(self.recv_size)
                         if testing:
@@ -151,14 +156,16 @@ class Peer(threading.Thread):
 
                     # pack it into a data structure
                     if testing:
-                        print msg_length
-                        print msg_id
-                        print_escaped_hex(msg_header, True)
+                        # print msg_length
+                        # print msg_id
+                        #print_escaped_hex(msg_header, True)
                         #print_escaped_hex(msg_payload, True)
+                        pass
                     pack_str = '!ib5s%ds' % (msg_length - 1)
 
                     if testing:
-                        print pack_str
+                        # print pack_str
+                        pass
                     message = pack(pack_str, msg_length, msg_id,
                                    msg_header, msg_payload)
 
@@ -178,11 +185,12 @@ class Peer(threading.Thread):
 
                     # Now do something depending on the message id
                     # Make sure the message is a valid message
-                    if (msg_id > 9 and msg_id < 0):
+                    if (msg_id > 9 or msg_id < 0):
                         self.num_errors += 1
                         if testing:
                             print 'Invalid message from %s:%d: msg_id: %d' % \
                                 (self.ip_address, self.port_number, msg_id)
+                        break
                     else:
                         handle_func = handles[msg_id]
 
@@ -192,7 +200,7 @@ class Peer(threading.Thread):
                         break
 
                     self.read_buf = self.read_buf[4 + msg_length:]
-                    # If they send an empty bitfield then we are screwed#####################
+                    # If they send an empty bitfield then we are screwed#######
             # if done:
             #     print 'got in done'
             #     continue
@@ -201,7 +209,8 @@ class Peer(threading.Thread):
             if not done:
                 if self.peer_choking is False:
                     if testing:
-                        print 'got into get piece block'
+                        pass
+                        # print 'got into get piece block'
                     # Get a piece to request if we don't have one
                     if self.cur_piece == '':
                         self.get_new_desired_piece()
@@ -239,7 +248,8 @@ class Peer(threading.Thread):
             try:
                 self.can_receive = False
                 if testing:
-                    print 'got into sending block'
+                    # print 'got into sending block'
+                    pass
                 if self.write_buf:
                     # if testing:
                     #     print 'got into write buf not empty'
@@ -264,7 +274,8 @@ class Peer(threading.Thread):
                         except (socket.error, socket.timeout) as err:
                             self.num_errors += 1
                 if testing:
-                    print 'got out of sending block'
+                    # print 'got out of sending block'
+                    pass
             except (socket.error, socket.timeout) as err:
                 self.can_receive = False
                 self.num_errors += 1
@@ -275,9 +286,10 @@ class Peer(threading.Thread):
 
             # sleep(0.0001)
             if testing:
-                print ''
+                #print ''
+                pass
 
-        print 'got out of loop'
+        # print 'got out of loop'
         return
 
     def connect(self):
@@ -531,12 +543,13 @@ class Peer(threading.Thread):
         pack_str = '!2i%ds' % (len(msg[3]) - 8)
         payload = unpack(pack_str, msg[3])
         if testing:
-            print 'length: %d' % msg[0]
-            print 'id: %d' % msg[1]
-            print 'header(%d): ' % len(msg[2]),
-            print_escaped_hex(msg[2], True)
-            print 'piece offset(4): %d' % payload[0]
-            print 'block offset(4): %d' % payload[1]
+            pass
+            #print 'length: %d' % msg[0]
+            #print 'id: %d' % msg[1]
+            #print 'header(%d): ' % len(msg[2]),
+            #print_escaped_hex(msg[2], True)
+            #print 'piece offset(4): %d' % payload[0]
+            #print 'block offset(4): %d' % payload[1]
         # print 'message(%d): ' % len(payload[2]),
         # print_escaped_hex(payload[2], True)
 
@@ -613,14 +626,14 @@ class Peer(threading.Thread):
 
     # Checks whether we need to send an intersted message
     def bitfield_analyze(self):
-        print 'analyzing bitfield'
+        #print 'analyzing bitfield'
         if self.interested is False:
             # Ask the piece manager whether we need to be intersted
             self.interested = self.piece_mgr.is_interested(self.bit_field)
             if self.interested is True:
                 self.send_interested_msg()
-                print 'interested'
+                #print 'interested'
                 return True
             return False
-        print 'not interested'
+        #print 'not interested'
         return True

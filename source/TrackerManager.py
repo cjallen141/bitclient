@@ -32,8 +32,8 @@ class TrackerManager:
             print 'Trying to contact ' + url
             if 'udp://' in url:
                 parsed_url = urlparse.urlparse(url)
-                print parsed_url.hostname
-                print parsed_url.port
+                #print parsed_url.hostname
+                #print parsed_url.port
                 ip_address = socket.gethostbyname(parsed_url.hostname)
                 port = parsed_url.port
                 udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -91,52 +91,52 @@ class TrackerManager:
                     print 'Removing tracker %s' % url
                     self.announce_url.remove(url)
 
-        # for url in self.announce_url:
-        #     if 'http://' in url:
-        #         if testing:
-        #             print 'Sending GET Request to Tracker'
+        for url in self.announce_url:
+            if 'http://' in url:
+                if testing:
+                    print 'Sending GET Request to Tracker'
         # Populate the parameters for the URL
-        #         params = {'info_hash': str(info_hash),
-        #                   'peer_id': peer_id,
-        #                   'downloaded': str(downloaded),
-        #                   'uploaded': str(uploaded),
-        #                   'left': str(length),
-        #                   'event': state,
-        #                   'port': str(port),
-        #                   'corrupt': str(corrupt),
-        #                   'key': key,
-        #                   'numwant': str(numwant),
-        #                   'compact': str(compact),
-        #                   'no_peer_id': str(no_peer_id),
-        #                   }
+                params = {'info_hash': str(info_hash),
+                          'peer_id': peer_id,
+                          'downloaded': str(downloaded),
+                          'uploaded': str(uploaded),
+                          'left': str(length),
+                          'event': state,
+                          'port': str(port),
+                          'corrupt': str(corrupt),
+                          'key': key,
+                          'numwant': str(numwant),
+                          'compact': str(compact),
+                          'no_peer_id': str(no_peer_id),
+                          }
         # Send the HTTP GET
-        #         try:
-        #             response = requests.get(url, params=params, timeout=0.1)
-        #             print response.url
-        #         except requests.exceptions.RequestException:
-        #             continue
+                try:
+                    response = requests.get(url, params=params, timeout=0.1)
+                    # print response.url
+                except requests.exceptions.RequestException:
+                    continue
         # print response.content
         # Check to see if we get good data back
-        #         if response.status_code > 400:
-        #             if testing:
-        #                 print 'Failed to Connect to Tracker'
-        #                 print 'Status Code: %s' % response.status_code
-        #                 print 'Reason: %s' % response.reason
-        #             ret_val = 0
-        #         elif 'peers' not in response.content:
-        #             if testing:
-        #                 print 'Failed to Connect to Tracker'
-        #                 print 'Incorrect URL Parameters'
-        #             ret_val = 0
-        #         else:
-        #             if testing:
-        #                 print 'Received GET Response from Tracker'
-        #             result = bdecode_data(response.content)
-        #             ret_val = result
-        #             self.udp_or_http = 'http'
-        #             if testing:
-        #                 print 'Received Peer Candidate List'
-        #         return ret_val
+                if response.status_code > 400:
+                    if testing:
+                        print 'Failed to Connect to Tracker'
+                        print 'Status Code: %s' % response.status_code
+                        print 'Reason: %s' % response.reason
+                    ret_val = 0
+                elif 'peers' not in response.content:
+                    if testing:
+                        print 'Failed to Connect to Tracker'
+                        print 'Incorrect URL Parameters'
+                    ret_val = 0
+                else:
+                    if testing:
+                        print 'Received GET Response from Tracker'
+                    result = bdecode_data(response.content)
+                    ret_val = result
+                    self.udp_or_http = 'http'
+                    if testing:
+                        print 'Received Peer Candidate List'
+                return ret_val
         if testing:
             print 'Tracker must be a GET/UDP tracker'
         ret_val = 0
@@ -195,12 +195,12 @@ class TrackerManager:
                 ascii_peer_data = bin2asc(peer_data)
 
                 num_peers = len(ascii_peer_data) / 12
-                print num_peers
+                #print num_peers
 
                 if testing:
                     print ''
 
-                print ascii_peer_data
+                #print ascii_peer_data
                 # Send it off to Peer Manager to fix
                 return [num_peers, ascii_peer_data]
             else:
