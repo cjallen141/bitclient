@@ -28,7 +28,7 @@ def main(argv):
     # Defaults
     file1 = 'bad'
     output_path = './'
-    port = 61130
+    port = 6881
     max_connections = 10
     udp_first = True
 
@@ -46,6 +46,8 @@ def main(argv):
 
         print err
         sys.exit(2)
+
+    print opts, args
 
     for opt, arg in opts:
         if opt == '-f':

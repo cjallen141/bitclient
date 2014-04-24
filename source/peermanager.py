@@ -74,7 +74,7 @@ class PeerManager(threading.Thread):
 
         # Only want to connect to myself
         peer_ip = '127.0.0.1'
-        peer_port = 61137
+        peer_port = self.data['port']
         if not self.peers:
             self.spawn_peer(peer_ip, peer_port)
         else:

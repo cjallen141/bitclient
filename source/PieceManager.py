@@ -91,7 +91,6 @@ class PieceManager:
             else:
                 if testing:
                     print 'Piece %d Verified' % cur_piece.idx
-                print 'got here'
 
         for piece in self.piece_list:
             #print 'in loop'
